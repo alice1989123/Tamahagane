@@ -25,11 +25,8 @@ export default function Home(props) {
         <CustomHead title="page title" />
       <Box className={styles.main}>
         <Heading className={styles.title} color="brand.900">
-          <Link href="https://nextjs.org">Next.js Nami Wallet integration!</Link>
+          <Link href="https://nextjs.org">Tamahagane-CNFT</Link>
         </Heading>
-        <Text className={styles.description}>
-          Boilerplate with Chakra UI - SASS
-        </Text>
         <Text mb="10">
           Interact with the Nami wallet to view and sign transactions on the cardano blockchain
         </Text>
