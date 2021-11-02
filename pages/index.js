@@ -1,28 +1,31 @@
-import Home from '../views/Home/Home';
-const axios = require('axios');
-import { LATEST_BLOCK } from '../constants/API/v0/routes';
+import Home from "../views/Home/Home";
+const axios = require("axios");
+import { LATEST_BLOCK } from "../constants/API/v0/routes";
 
 export default function HomePage(props) {
-  return (
-    <Home {...props} />
-  )
+  return <Home {...props} />;
 }
 
 // we can add server side rendering here to seperate from views
 export async function getServerSideProps() {
   async function getLatestBlock() {
     try {
-      const response = await axios.get(LATEST_BLOCK);
+      const config = {
+        headers: {
+          project_id: process.env.NEXT_PUBLIC_BLOCKFROST_PROJECT_ID,
+        },
+      };
+      const response = await axios.get(LATEST_BLOCK, config);
       return response.data.latestBlock;
     } catch (error) {
       console.error(error);
-      return null
+      return null;
     }
   }
   const latestBlock = await getLatestBlock();
-      return {
-          props: {
-              latestBlock,
-          }
-      };
-};
+  return {
+    props: {
+      latestBlock,
+    },
+  };
+}
