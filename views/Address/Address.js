@@ -5,14 +5,10 @@ import MiddleEllipsis from "react-middle-ellipsis";
 
 //const codeStyle = { backgroundColor: "#cccccc" };
 
-export default function Address(props) {
-  console.log(props);
-  const address = props.address;
-  console.log(address);
-  const balanceAda = props.addressInfo
+export default function Address({address, addressInfo}) {
+  const balanceAda = addressInfo
     ? JSON.stringify(addressInfo.amount[0].quantity / 1000000)
     : 0;
-  console.log(balanceAda);
   return (
     <Box className={styles.container} bg={"gray.200"}>
       <CustomHead title="Wallet details" />
