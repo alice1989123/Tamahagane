@@ -6,13 +6,12 @@ import MiddleEllipsis from "react-middle-ellipsis";
 //const codeStyle = { backgroundColor: "#cccccc" };
 
 export default function Address(props) {
-  console.log(props);
   const address = props.address;
-  console.log(address);
+  // this is needed because balance is obtained from blockFrost and BlockFrost will return a null response if the address has never been used before, even if the address si right.
+
   const balanceAda = props.addressInfo
     ? JSON.stringify(addressInfo.amount[0].quantity / 1000000)
     : 0;
-  console.log(balanceAda);
   return (
     <Box className={styles.container} bg={"gray.200"}>
       <CustomHead title="Wallet details" />
