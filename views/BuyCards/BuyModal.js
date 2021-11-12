@@ -1,4 +1,6 @@
-import { Button } from "@chakra-ui/react";
+import { Button, Box, Text } from "@chakra-ui/react";
+import Counter from "./countdown";
+import { useState } from "react";
 
 import {
   Modal,
@@ -9,29 +11,92 @@ import {
   ModalBody,
   ModalCloseButton,
 } from "@chakra-ui/modal";
+import BuyCardsPage from "../../pages/buycards";
 
 function BuyModal({ buyOption, viewModal, setviewModal }) {
+  const [reserved, setreserverd] = useState(false);
+  const buyPrice = buyOption * 2;
   return (
     <>
-      <Modal isOpen={viewModal} onClose={() => setviewModal(false)}>
+      <Modal
+        closeOnOverlayClick={false}
+        isOpen={viewModal}
+        onClose={() => {
+          setreserverd(false);
+          setviewModal(false);
+        }}
+        size={"xl"}
+      >
         <ModalOverlay />
         <ModalContent>
-          <ModalHeader>
-            {`You are about to buy  ${buyOption} - package`}{" "}
+          <ModalHeader justifyContent={"center"}>
+            {`You are about to buy  ${buyOption} - package  `}
           </ModalHeader>
           <ModalCloseButton />
-          <ModalBody>
-            The price of this bundle is ${buyOption * 2} Ada{" "}
+          <ModalBody m={2}>
+            <p>
+              This asset you are about to buy consist of {buyOption} package of
+              Cards each card packages contain 7 random items an the price of
+              this asset is ${buyPrice}
+            </p>
           </ModalBody>
+          {reserved && (
+            <>
+              <ModalBody m={2}>
+                <Box m={2}>
+                  <Text my={2}>
+                    In Order to complete the transaction send ${buyPrice} before
+                    the Counter ends to the following Adress
+                  </Text>
+                  <Text my={2} fontSize="md">
+                    addr1q96kuchljenmrpeqndh7rdthqc2frnm0jw5pu8u3ws0zuwkvhpj2uecg0a5mhkdtwnm30qw38tjq42uxu80rpjn7yytscl5wex
+                  </Text>
 
-          <ModalFooter>
-            <Button colorScheme="blue" mr={3}>
-              Buy
-            </Button>
-            <Button onClick={() => setviewModal(false)} variant="ghost">
-              Go Back
-            </Button>
-          </ModalFooter>
+                  <Text my={2}>
+                    Once we confirm the transaction the asssets will be visible
+                    on your inventary.
+                  </Text>
+                </Box>
+              </ModalBody>
+              <>
+                <Counter />
+              </>
+            </>
+          )}
+          {!reserved && (
+            <ModalFooter>
+              <Button
+                onClick={() => setreserverd(true)}
+                colorScheme="green"
+                mr={3}
+              >
+                Reserve Items
+              </Button>
+              <Button
+                onClick={() => {
+                  setviewModal(false);
+                }}
+                variant="ghost"
+              >
+                Go Back
+              </Button>
+            </ModalFooter>
+          )}
+          {reserved && (
+            <ModalFooter m={2}>
+              <Button
+                onClick={() => {
+                  setreserverd(false);
+                  setviewModal(false);
+                  console.log("you buyed the BuyCardsPage");
+                }}
+                colorScheme="blue"
+                mr={3}
+              >
+                Got it!
+              </Button>
+            </ModalFooter>
+          )}
         </ModalContent>
       </Modal>
     </>

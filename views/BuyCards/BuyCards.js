@@ -3,12 +3,13 @@ import { Grid, Box, Button } from "@chakra-ui/react";
 import styles from "../../styles/BuyCards.module.scss";
 import BuyModal from "./BuyModal";
 import React, { useState } from "react";
-
 const BuyCards = function (props) {
   const buyOptions = [1, 2, 3, 5];
   const toWords = ["zero", "one ", "two", "tree", "five", "five"];
   const [viewModal, setviewModal] = useState(false);
   const [buyOption, setbuyOption] = useState(0);
+
+  const latestBlock = props.latestBlock;
 
   return (
     <>
