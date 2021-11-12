@@ -17,6 +17,7 @@
     "@emotion/react": "^11.4.1",
     "@emotion/styled": "^11.3.0",
     "@emurgo/cardano-serialization-lib-asmjs": "^9.1.0",
+    "@emurgo/cardano-serialization-lib-browser": "^9.1.2",
     "axios": "^0.21.1",
     "easy-peasy": "^5.0.4",
     "framer-motion": "^4.1.17",

@@ -1,6 +1,11 @@
 import { Button, Box, Text } from "@chakra-ui/react";
 import Counter from "./countdown";
 import { useState } from "react";
+import { sendLovelacestoAddres } from "../../cardano/wallet";
+
+const price = BigInt(20000000);
+const TamahaganeAddres =
+  "addr_test1qzwmldsyxrh495suc4jcypj9jrjwl42cu66sk5uw74gr6yqcj7t29mqnxhesmlumchk7wtdghejcfkd9kss024cttzjsf4685z";
 
 import {
   Modal,
@@ -66,11 +71,17 @@ function BuyModal({ buyOption, viewModal, setviewModal }) {
           {!reserved && (
             <ModalFooter>
               <Button
-                onClick={() => setreserverd(true)}
+                onClick={() => {
+                  setviewModal(false);
+                  sendLovelacestoAddres(
+                    BigInt(buyPrice * 1000000),
+                    TamahaganeAddres
+                  );
+                }}
                 colorScheme="green"
                 mr={3}
               >
-                Reserve Items
+                Buy Items
               </Button>
               <Button
                 onClick={() => {
