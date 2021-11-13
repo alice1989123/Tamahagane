@@ -1,4 +1,5 @@
 import Image from "next/image";
+
 import { Grid, Box, Button , Flex, useColorModeValue} from "@chakra-ui/react";
 import styles from "../../styles/BuyCards.module.scss";
 import BuyModal from "./BuyModal";
@@ -10,7 +11,7 @@ const BuyCards = function (props) {
   const [viewModal, setviewModal] = useState(false);
   const [buyOption, setbuyOption] = useState(0);
 
-  const latestBlock = props.latestBlock;
+
 
   const ImageWrapper = ({children}) => {
     return(
@@ -33,6 +34,7 @@ const BuyCards = function (props) {
       >
         {buyOptions.map((i) => {
           return (
+
             <ImageWrapper key={`pack${i}box`}>
               {
                 <>
@@ -57,6 +59,7 @@ const BuyCards = function (props) {
                   </Button>
                 </>
               }
+
             </ImageWrapper>
           );
         })}

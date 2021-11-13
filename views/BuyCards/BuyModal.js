@@ -3,7 +3,6 @@ import Counter from "./countdown";
 import { useState } from "react";
 import { sendLovelacestoAddres } from "../../cardano/wallet";
 
-const price = BigInt(20000000);
 const TamahaganeAddres =
   "addr_test1qzwmldsyxrh495suc4jcypj9jrjwl42cu66sk5uw74gr6yqcj7t29mqnxhesmlumchk7wtdghejcfkd9kss024cttzjsf4685z";
 
@@ -16,7 +15,6 @@ import {
   ModalBody,
   ModalCloseButton,
 } from "@chakra-ui/modal";
-import BuyCardsPage from "../../pages/buycards";
 
 function BuyModal({ buyOption, viewModal, setviewModal }) {
   const [reserved, setreserverd] = useState(false);
