@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { Grid, Box, Button , Flex} from "@chakra-ui/react";
+import { Grid, Box, Button , Flex, useColorModeValue} from "@chakra-ui/react";
 import styles from "../../styles/BuyCards.module.scss";
 import BuyModal from "./BuyModal";
 import React, { useState } from "react";
