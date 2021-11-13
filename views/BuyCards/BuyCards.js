@@ -13,12 +13,14 @@ const BuyCards = function (props) {
   const latestBlock = props.latestBlock;
 
   const ImageWrapper = ({children}) => {
+    return(
     <Box
       color={useColorModeValue("gray.100", "gray.900")}
       className={styles.card}
     >
       {children}
-    </Box>;
+    </Box>
+  )
   };
 
   return (
