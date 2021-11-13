@@ -16,7 +16,7 @@ export async function getServerSideProps() {
         },
       };
       const response = await axios.get(LATEST_BLOCK, config);
-      return response.data.latestBlock;
+      return response.data.slot;
     } catch (error) {
       console.error(error);
       return null;

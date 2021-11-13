@@ -5,6 +5,7 @@ import MiddleEllipsis from "react-middle-ellipsis";
 
 //const codeStyle = { backgroundColor: "#cccccc" };
 
+
 export default function Address({address, addressInfo}) {
   const balanceAda = addressInfo
     ? JSON.stringify(addressInfo.amount[0].quantity / 1000000)
