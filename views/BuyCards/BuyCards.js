@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { Grid, Box, Button } from "@chakra-ui/react";
+import { Grid, Box, Button , Flex} from "@chakra-ui/react";
 import styles from "../../styles/BuyCards.module.scss";
 import BuyModal from "./BuyModal";
 import React, { useState } from "react";
@@ -12,18 +12,23 @@ const BuyCards = function (props) {
 
   const latestBlock = props.latestBlock;
 
-  return (
-    <>
-      <>
-        <Grid
-          templateColumns="repeat(auto-fit, minmax(300px, 1fr))"
-          grid-auto-rows="340px"
-          gap="2rem"
-        >
-          {buyOptions.map((i) => {
-            return (
-              <>
-                <Box className={styles.card} key={`pack${i}box`}>
+    return (
+    <Flex flexDirection="column" justifyItems="center" marginTop={20}>
+      <Grid
+        templateColumns="repeat(auto-fit, minmax(300px, 1fr))"
+        grid-auto-rows="340px"
+        gap="2rem"
+        key={"gallery"}
+      >
+        {buyOptions.map((i) => {
+          return (
+            <Box
+              color={useColorModeValue("gray.100", "gray.900")}
+              className={styles.card}
+              key={`pack${i}box`}
+            >
+              {
+                <>
                   <Image
                     src={`/pack${i}.png`}
                     width="350"
@@ -43,19 +48,22 @@ const BuyCards = function (props) {
                   >
                     {`Buy ${toWords[i]}  package`}
                   </Button>
-                </Box>
-              </>
-            );
-          })}
+                </>
+              }
+            </Box>
+          );
+        })}
 
+        {
           <BuyModal
             viewModal={viewModal}
             setviewModal={setviewModal}
             buyOption={buyOption}
+            key={"buyModal"}
           />
-        </Grid>
-      </>
-    </>
+        }
+      </Grid>
+    </Flex>
   );
 };
 
