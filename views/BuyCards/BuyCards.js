@@ -12,7 +12,16 @@ const BuyCards = function (props) {
 
   const latestBlock = props.latestBlock;
 
-    return (
+  const ImageWrapper = () => {
+    <Box
+      color={useColorModeValue("gray.100", "gray.900")}
+      className={styles.card}
+    >
+      {children}
+    </Box>;
+  };
+
+  return (
     <Flex flexDirection="column" justifyItems="center" marginTop={20}>
       <Grid
         templateColumns="repeat(auto-fit, minmax(300px, 1fr))"
@@ -22,11 +31,7 @@ const BuyCards = function (props) {
       >
         {buyOptions.map((i) => {
           return (
-            <Box
-              color={useColorModeValue("gray.100", "gray.900")}
-              className={styles.card}
-              key={`pack${i}box`}
-            >
+            <ImageWrapper key={`pack${i}box`}>
               {
                 <>
                   <Image
@@ -50,7 +55,7 @@ const BuyCards = function (props) {
                   </Button>
                 </>
               }
-            </Box>
+            </ImageWrapper>
           );
         })}
 
