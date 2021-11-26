@@ -1,4 +1,4 @@
-import { addressToBech32 } from "../cardano/wallet";
+import { addressToBech32 } from "../cardano/wallet.js";
 import axios from "axios";
 import { ADDRESSES, ASSETS } from "../constants/API/v0/routes";
 import { useState, useEffect } from "react";

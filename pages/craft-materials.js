@@ -1,4 +1,4 @@
-import { addressToBech32 } from "../cardano/wallet";
+import { addressToBech32 } from "../cardano/wallet.js";
 import axios from "axios";
 import { ADDRESSES, ASSETS } from "../constants/API/v0/routes";
 import { useState, useEffect } from "react";
@@ -16,6 +16,7 @@ import { Button } from "@chakra-ui/react";
 import Image from "next/image";
 import ListAssets from "../components/ListAssets";
 import { useColorModeValue } from "@chakra-ui/color-mode";
+import { MintTx } from "../cardano/wallet.js";
 
 const SelectMaterialsDropDown = function () {
   const materials = [
@@ -61,6 +62,8 @@ const getMetadata = async function (asset) {
 };
 
 export default function CraftMaterials() {
+  const metadata = { name: "josh", quantity: "1" };
+
   const [NFTs, setNFTs] = useState([]);
   const [selectedRecipe, setselectedRecipe] = useState(null);
   const [loadingState, setLoadingState] = useState("not-loaded");
@@ -174,7 +177,13 @@ export default function CraftMaterials() {
               objectFit="contain"
             ></Image>
 
-            <Button display="flex" colorScheme="teal" size="lg" m={1}>
+            <Button
+              onClick={() => MintTx(metadata)}
+              display="flex"
+              colorScheme="teal"
+              size="lg"
+              m={1}
+            >
               Forge
             </Button>
           </Box>
