@@ -24,7 +24,11 @@ const getMetadata = async function (asset) {
   }
 };
 
-export default function ListAssets({ setselectedAsset }) {
+export default function ListAssets({
+  setselectedAsset,
+  filterOption,
+  categorie,
+}) {
   const [NFTs, setNFTs] = useState([]);
   const [loadingState, setLoadingState] = useState("not-loaded");
   useEffect(() => {
@@ -62,8 +66,22 @@ export default function ListAssets({ setselectedAsset }) {
       const data2 = await Promise.all(
         data1.map(async (x) => await getMetadata(x))
       );
+      console.log(data2);
+      let filteredMetadata = data2.filter(
+        (x) =>
+          x.onchain_metadata &&
+          x.onchain_metadata.description &&
+          x.onchain_metadata.description.split("-")[0] == filterOption
+      );
+
       const assets = data2.map((x) => x.asset);
-      setNFTs(data2);
+      if (categorie) {
+        filteredMetadata =
+          filteredMetadata.filter(
+            (x) => x.onchain_metadata.description.split("-")[1]
+          ) == categorie;
+      }
+      setNFTs(filteredMetadata);
 
       setLoadingState("loaded");
     }
@@ -93,6 +111,7 @@ export default function ListAssets({ setselectedAsset }) {
           >
             {
               <img
+                width="300"
                 src={
                   nft.onchain_metadata.image &&
                   `${infuragateway}${nft.onchain_metadata.image.replace(
@@ -111,7 +130,7 @@ export default function ListAssets({ setselectedAsset }) {
               />
             }
             <div>
-              <p>Name - {`${JSON.stringify(nft.onchain_metadata.name)}`}</p>
+              <p> {/*`${JSON.stringify(nft.onchain_metadata.name)}`*/}</p>
             </div>
           </GridItem>
         ))

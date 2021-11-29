@@ -247,8 +247,6 @@ const amountToValue = async (assets) => {
         .map((asset) => asset.unit.slice(0, 56))
     ),
   ];
-  console.log(assets);
-  console.log(policies);
   policies.forEach((policy) => {
     const policyAssets = assets.filter(
       (asset) => asset.unit.slice(0, 56) === policy
@@ -292,7 +290,6 @@ const asciiToHex = (str) => {
 export async function createLockingPolicyScript() {
   const slot = await getLatestBlock();
   const ttl = slot + 1000;
-  console.log(ttl);
   const address = Buffer.from(
     (await window.cardano.getUsedAddresses())[0],
     "hex"
@@ -314,14 +311,12 @@ export async function createLockingPolicyScript() {
   const finalScript = Loader.Cardano.NativeScript.new_script_all(
     Loader.Cardano.ScriptAll.new(nativeScripts)
   );
-  console.log(finalScript);
   const policyId = Buffer.from(
     Loader.Cardano.ScriptHash.from_bytes(
       finalScript.hash().to_bytes()
     ).to_bytes(),
     "hex"
   ).toString("hex");
-  console.log({ id: policyId, script: finalScript, ttl });
   return { id: policyId, script: finalScript, ttl };
 }
 
@@ -365,8 +360,6 @@ export async function mintTx(assets, metadata, policy, protocolParameters) {
     (await window.cardano.getUsedAddresses())[0],
     "hex"
   );
-
-  console.log(protocolParameters);
 
   const checkValue = await amountToValue(
     assets.map((asset) => ({
@@ -473,12 +466,17 @@ export async function mintTx(assets, metadata, policy, protocolParameters) {
   let _metadata;
   if (metadata) {
     const generalMetadata = Loader.Cardano.GeneralTransactionMetadata.new();
+    console.log(Buffer.from(generalMetadata.to_bytes(), "hex").toString("hex"));
 
     generalMetadata.insert(
       Loader.Cardano.BigNum.from_str("721"),
       Loader.Cardano.encode_json_str_to_metadatum(JSON.stringify(metadata))
     );
-    _metadata = Loader.Cardano.AuxiliaryData.new(generalMetadata);
+    /*     console.log(Loader.Cardano.AuxiliaryData.new().len());
+     */ _metadata = Loader.Cardano.AuxiliaryData.new();
+    _metadata.set_metadata(generalMetadata);
+
+    console.log(`the metadata is ${_metadata.metadata()}`);
 
     rawTxBody.set_auxiliary_data_hash(
       Loader.Cardano.hash_auxiliary_data(_metadata)
@@ -615,4 +613,160 @@ async function submitTx(signedTx) {
     Buffer.from(signedTx.to_bytes(), "hex").toString("hex")
   );
   return txHash;
+}
+
+export async function createTamahagenPolicyScript() {
+  const slot = await getLatestBlock();
+  const ttl = slot + 1000;
+  const address = Buffer.from(
+    (await window.cardano.getUsedAddresses())[0],
+    "hex"
+  );
+
+  const tamahaganeAddress = Loader.Cardano.Address.from_bech32(
+    "addr_test1qrj8usl8knn54f42aaphxxq94956jsl7mv259tjd83uk75wthmqmh5c9s5vr6fg8el3f835cv8gvmdshy505xdhe0aqsayctzd"
+  );
+
+  const paymentKeyHash = Loader.Cardano.BaseAddress.from_address(
+    Loader.Cardano.Address.from_bytes(address)
+  )
+    .payment_cred()
+    .to_keyhash();
+
+  const tamahaganeKeyHash = Loader.Cardano.BaseAddress.from_address(
+    tamahaganeAddress
+  )
+    .payment_cred()
+    .to_keyhash();
+
+  const nativeScripts = Loader.Cardano.NativeScripts.new();
+  const script = Loader.Cardano.ScriptPubkey.new(paymentKeyHash);
+  const nativeScript = Loader.Cardano.NativeScript.new_script_pubkey(script);
+  const tamahagenScript = Loader.Cardano.ScriptPubkey.new(tamahaganeKeyHash);
+  const tamahaganeNativeScript =
+    Loader.Cardano.NativeScript.new_script_pubkey(tamahagenScript);
+
+  const lockScript = Loader.Cardano.NativeScript.new_timelock_expiry(
+    Loader.Cardano.TimelockExpiry.new(ttl)
+  );
+  nativeScripts.add(nativeScript);
+  /*   nativeScripts.add(tamahaganeNativeScript);
+   */ nativeScripts.add(lockScript);
+
+  const finalScript = Loader.Cardano.NativeScript.new_script_all(
+    Loader.Cardano.ScriptAll.new(nativeScripts)
+  );
+  const policyId = Buffer.from(
+    Loader.Cardano.ScriptHash.from_bytes(
+      finalScript.hash().to_bytes()
+    ).to_bytes(),
+    "hex"
+  ).toString("hex");
+  return { id: policyId, script: finalScript, ttl };
+}
+
+export async function MintWeapon(metadata) {
+  const protocolParameters = await initTx();
+
+  const policy = await createTamahagenPolicyScript();
+
+  let name = metadata.name.slice(0, 32);
+
+  const assets = [{ name: name, quantity: metadata.quantity.toString() }];
+
+  const METADATA = {
+    [policy.id]: {
+      [name.slice(0, 32)]: {
+        ...metadata.metadata,
+      },
+    },
+    ["version"]: "1.0",
+  };
+  console.log(METADATA);
+
+  try {
+    const transaction = await mintTx(
+      assets,
+      METADATA,
+      policy,
+      protocolParameters
+    );
+    const signedTx = await partialsignTx(transaction);
+    const txHash = await submitTx(signedTx);
+    return txHash;
+  } catch (error) {
+    console.log(error);
+    return { error: error.info || error.toString() };
+  }
+  // const metadata = METADATA
+}
+
+async function partialsignTx(transaction) {
+  //await Loader.load();
+  const witnesses = await window.cardano.signTx(
+    Buffer.from(transaction.to_bytes(), "hex").toString("hex"),
+    true
+  );
+  const txWitnesses = transaction.witness_set();
+  const txVkeys = txWitnesses.vkeys();
+  const txScripts = txWitnesses.native_scripts();
+
+  const addWitnesses = Loader.Cardano.TransactionWitnessSet.from_bytes(
+    Buffer.from(witnesses, "hex")
+  );
+  const addVkeys = addWitnesses.vkeys();
+  const addScripts = addWitnesses.native_scripts();
+
+  const totalVkeys = Loader.Cardano.Vkeywitnesses.new();
+  const totalScripts = Loader.Cardano.NativeScripts.new();
+
+  if (txVkeys) {
+    for (let i = 0; i < txVkeys.len(); i++) {
+      totalVkeys.add(txVkeys.get(i));
+    }
+  }
+  if (txScripts) {
+    for (let i = 0; i < txScripts.len(); i++) {
+      totalScripts.add(txScripts.get(i));
+    }
+  }
+  if (addVkeys) {
+    for (let i = 0; i < addVkeys.len(); i++) {
+      totalVkeys.add(addVkeys.get(i));
+    }
+  }
+  if (addScripts) {
+    for (let i = 0; i < addScripts.len(); i++) {
+      totalScripts.add(addScripts.get(i));
+    }
+  }
+
+  const totalWitnesses = Loader.Cardano.TransactionWitnessSet.new();
+  totalWitnesses.set_vkeys(totalVkeys);
+  totalWitnesses.set_native_scripts(totalScripts);
+
+  const signedTx = await Loader.Cardano.Transaction.new(
+    transaction.body(),
+    totalWitnesses,
+    transaction.auxiliary_data()
+  );
+  console.log(signedTx);
+  console.log(signedTx.witness_set());
+  console.log(Buffer.from(signedTx.to_bytes(), "hex").toString("hex"));
+  return signedTx;
+}
+export function metadataBuilder(description, src, name, mediaType) {
+  return {
+    description: description,
+    files: [
+      {
+        mediaType: mediaType,
+        name: name,
+        src: src,
+      },
+    ],
+    image: src,
+    mediaType: mediaType,
+    name: name,
+  };
 }

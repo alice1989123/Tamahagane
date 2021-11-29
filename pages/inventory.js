@@ -87,7 +87,10 @@ export default function Inventory1() {
             </Text>
             <SelectMaterialsDropDown />
           </Box>
-          <ListAssets setselectedAsset={setselectedAsset}></ListAssets>
+          <ListAssets
+            setselectedAsset={setselectedAsset}
+            filterOption={"weapon"}
+          ></ListAssets>
         </GridItem>
         <GridItem
           display="flex"
