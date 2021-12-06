@@ -49,7 +49,9 @@ export default function ListAssets({
             project_id: process.env.NEXT_PUBLIC_BLOCKFROST_PROJECT_ID,
           },
         };
-        const response = await axios.get(`${ADDRESSES}/${address}`, config);
+        const response = await axios.post("http://localhost:3001/api/assetss", {
+          address: address,
+        });
         const assets = response.data.amount.map((x) => x.unit);
 
         return assets;
@@ -64,21 +66,27 @@ export default function ListAssets({
     } else {
       const data1 = data.filter((x) => x != "lovelace");
       const data2 = await Promise.all(
-        data1.map(async (x) => await getMetadata(x))
+        data1.map(
+          async (x) =>
+            await axios.post("http://localhost:3001/api/assetss/info", {
+              asset: x,
+            })
+        )
       );
-      console.log(data2);
-      let filteredMetadata = data2.filter(
+      let filteredMetadata_ = data2.filter(
         (x) =>
-          x.onchain_metadata &&
-          x.onchain_metadata.description &&
-          x.onchain_metadata.description.split("-")[0] == filterOption
+          x.data.onchain_metadata &&
+          x.data.onchain_metadata &&
+          x.data.onchain_metadata.description &&
+          x.data.onchain_metadata.description.split("-")[0] == filterOption
       );
+      let filteredMetadata = filteredMetadata_.map((x) => x.data);
 
-      const assets = data2.map((x) => x.asset);
+      const assets = data2.map((x) => x.data.asset);
       if (categorie) {
         filteredMetadata =
           filteredMetadata.filter(
-            (x) => x.onchain_metadata.description.split("-")[1]
+            (x) => x.data.onchain_metadata.description.split("-")[1]
           ) == categorie;
       }
       setNFTs(filteredMetadata);
