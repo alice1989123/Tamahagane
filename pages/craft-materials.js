@@ -18,7 +18,7 @@ import { useColorModeValue } from "@chakra-ui/color-mode";
 import { MintWeapon, metadataBuilder } from "../cardano/wallet.js";
 import weapons from "../constants/weaponsRecipes.js";
 import SelectMaterialsDropDown from "../components/MaterialsDropdown.js";
-import burningTokens from "../cardano/burningTokens.js";
+import { burningTokens, forgeWeapon } from "../cardano/apiServerCalls.js";
 
 const infuragateway = "https://ipfs.infura.io/";
 
@@ -161,7 +161,7 @@ export default function CraftMaterials() {
 
             <Button
               onClick={() => {
-                burningTokens();
+                forgeWeapon(selectedAsset);
               }}
               display="flex"
               colorScheme="teal"

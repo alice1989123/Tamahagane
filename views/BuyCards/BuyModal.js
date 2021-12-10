@@ -2,6 +2,7 @@ import { Button, Box, Text } from "@chakra-ui/react";
 import Counter from "./countdown";
 import { useState } from "react";
 import { sendLovelacestoAddres } from "../../cardano/wallet";
+import { buyCards } from "../../cardano/apiServerCalls.js";
 
 const TamahaganeAddres =
   "addr_test1qzwmldsyxrh495suc4jcypj9jrjwl42cu66sk5uw74gr6yqcj7t29mqnxhesmlumchk7wtdghejcfkd9kss024cttzjsf4685z";
@@ -71,10 +72,11 @@ function BuyModal({ buyOption, viewModal, setviewModal }) {
               <Button
                 onClick={() => {
                   setviewModal(false);
-                  sendLovelacestoAddres(
+                  buyCards(buyOption);
+                  /* sendLovelacestoAddres(
                     BigInt(buyPrice * 1000000),
                     TamahaganeAddres
-                  );
+                  ); */
                 }}
                 colorScheme="green"
                 mr={3}

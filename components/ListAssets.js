@@ -128,12 +128,9 @@ export default function ListAssets({
                   )}`
                 }
                 onClick={() =>
-                  setselectedAsset(
-                    `${infuragateway}${nft.onchain_metadata.image.replace(
-                      "ipfs://",
-                      "ipfs/"
-                    )}`
-                  )
+                  setselectedAsset([
+                    { unit: `${nft.asset}`, quantity: `${nft.quantity}` },
+                  ])
                 }
               />
             }
