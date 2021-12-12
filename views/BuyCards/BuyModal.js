@@ -3,6 +3,7 @@ import BuyMessageModal from "./BuyMessageModal";
 import SubmitionError from "./SubmitionErrosMessage";
 import { useState } from "react";
 import { buyCards } from "../../cardano/apiServerCalls.js";
+import styles from "../../styles/Modals.module.scss";
 
 const TamahaganeAddres =
   "addr_test1qzwmldsyxrh495suc4jcypj9jrjwl42cu66sk5uw74gr6yqcj7t29mqnxhesmlumchk7wtdghejcfkd9kss024cttzjsf4685z";
@@ -33,24 +34,38 @@ function BuyModal({ buyOption, viewModal, setviewModal }) {
       >
         <ModalOverlay />
         <ModalContent>
-          <ModalHeader justifyContent={"center"}>
-            {`You are about to buy  ${buyOption} - package  `}
+          <ModalHeader
+            style={{
+              fontSize: "1.5rem",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+          >
+            Detailed description of the asset
           </ModalHeader>
-          <ModalCloseButton />
-          <ModalBody m={2}>
-            <p>
-              Each card package contains 7 randomly selected raw-materials, each
-              random material is an NFT in the Cardano-BlockChain. You can use
-              the raw-materials for forge weapons. The price of this asset is
-              {buyPrice} ₳.
-            </p>
-            The transaction will be charged with an extra 2₳, wich you will get
-            back with your cards. The process usually takes less than a minute
-            <p />
-          </ModalBody>
 
+          <ModalCloseButton />
+          <ModalBody className={styles.modal} m={2}>
+            <h2 className={styles.modal}>
+              You are about to buy {buyOption} package. The price of this asset
+              is {buyPrice} ₳.
+            </h2>
+            <p className={styles.modal}>
+              Each card package contains 7 randomly selected raw materials which
+              are used to forge new weapons. Each material is an NFT in the
+              Cardano Block-Chain.
+            </p>
+            <br></br>
+            <p className={styles.advice}>
+              The transaction will be charged with an extra of 2₳, which you
+              will get back with your cards. The process usually takes less than
+              a minute.
+            </p>
+          </ModalBody>
           <ModalFooter>
             <Button
+              size="lg"
               onClick={async () => {
                 setviewModal(false);
                 const buy = await buyCards(buyOption);
@@ -71,6 +86,7 @@ function BuyModal({ buyOption, viewModal, setviewModal }) {
               Buy Items
             </Button>
             <Button
+              size="lg"
               onClick={() => {
                 setviewModal(false);
               }}

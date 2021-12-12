@@ -1,6 +1,5 @@
 import { addressToBech32 } from "../cardano/wallet.js";
 import axios from "axios";
-import { ADDRESSES, ASSETS } from "../constants/API/v0/routes";
 import { useState, useEffect } from "react";
 import {
   Text,
@@ -128,6 +127,7 @@ export default function CraftMaterials() {
             <SelectMaterialsDropDown />
           </Box>
           <ListAssets
+            selectedAsset={selectedAsset}
             setselectedAsset={setselectedAsset}
             filterOption={"material"}
           ></ListAssets>

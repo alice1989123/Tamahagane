@@ -4,6 +4,26 @@ import { ADDRESSES, ASSETS } from "../constants/API/v0/routes";
 import { useState, useEffect } from "react";
 import { GridItem, SimpleGrid } from "@chakra-ui/layout";
 import { useColorModeValue } from "@chakra-ui/color-mode";
+import styles from "./LisAssets.module.scss";
+
+const imageWraperStyle = {
+  //borderWidth: "5px",
+  //borderStyle: "solid",
+  //borderColor: "red",
+  //backgroundColor: "green",
+  maxWidth: "310px",
+  //borderRadius: "10px",
+};
+
+const imageStyle = {
+  //borderWidth: "5px",
+  borderStyle: "solid",
+  borderColor: "red",
+  backgroundColor: "green",
+  maxWidth: "300px",
+  borderRadius: "10px",
+  hover: { borderWidth: "10px" },
+};
 
 const infuragateway = "https://ipfs.infura.io/";
 
@@ -25,6 +45,7 @@ const getMetadata = async function (asset) {
 };
 
 export default function ListAssets({
+  selectedAsset,
   setselectedAsset,
   filterOption,
   categorie,
@@ -112,6 +133,11 @@ export default function ListAssets({
       ) : (
         NFTs.map((nft, i) => (
           <GridItem
+            className={
+              selectedAsset && nft.asset === selectedAsset[0].unit
+                ? styles.selectedCard
+                : styles.card
+            }
             key={i}
             _hover={{
               background: "gray.500",
@@ -119,6 +145,7 @@ export default function ListAssets({
           >
             {
               <img
+                className={styles.image}
                 width="300"
                 src={
                   nft.onchain_metadata.image &&
@@ -129,7 +156,11 @@ export default function ListAssets({
                 }
                 onClick={() =>
                   setselectedAsset([
-                    { unit: `${nft.asset}`, quantity: `${nft.quantity}` },
+                    {
+                      unit: `${nft.asset}`,
+                      quantity: `${nft.quantity}`,
+                      metadata: `${nft.onchain_metadata}`,
+                    },
                   ])
                 }
               />

@@ -1,7 +1,6 @@
 import { Button, Box, Text } from "@chakra-ui/react";
-import Counter from "./countdown";
-import { useState } from "react";
-import { buyCards } from "../../cardano/apiServerCalls.js";
+import { CheckIcon } from "@chakra-ui/icons";
+import styles from "../../styles/Modals.module.scss";
 
 const TamahaganeAddres =
   "addr_test1qzwmldsyxrh495suc4jcypj9jrjwl42cu66sk5uw74gr6yqcj7t29mqnxhesmlumchk7wtdghejcfkd9kss024cttzjsf4685z";
@@ -25,34 +24,41 @@ function BuyMessageModal({ confirmation, setConfirmation }) {
         onClose={() => {
           setConfirmation(false);
         }}
-        size={"xl"}
+        size={"3xl"}
       >
         <ModalOverlay />
         <ModalContent>
-          <ModalHeader justifyContent={"center"}>
+          <ModalHeader
+            style={{
+              fontSize: "1.5rem",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+          >
+            <CheckIcon w={6} h={6} m={2} color="green.500" />
             {`Your transaction has been succesfully submited `}
           </ModalHeader>
           <ModalCloseButton />
           <ModalBody m={2}>
-            <h2>
+            <h2 className={styles.modal}>
               Your transaction has been submited to the Cardano Block Chain with
               the following Transaction Hash
             </h2>
-            <p>{confirmation}</p>
-            <br></br> We will send your items to your address, this process
-            usually takes less than 2 minutes.
-            <p />
+            <p className={styles.hash}>{confirmation}</p>
+
+            <p className={styles.modal}>
+              We will send your items to your address, this process usually
+              takes less than 2 minutes.
+            </p>
           </ModalBody>
 
           <ModalFooter>
-            <Button colorScheme="blue" mr={3}>
-              Buy Items
-            </Button>
             <Button
+              size="lg"
               onClick={() => {
                 setConfirmation(false);
               }}
-              variant="ghost"
               colorScheme="blue"
             >
               Go Back

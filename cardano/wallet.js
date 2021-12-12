@@ -26,9 +26,9 @@ export const sendLovelacestoAddres = async function (
         Buffer.from(rawutxo, "hex")
       )
     );
-    const selectedUTXOs = selectUTXO(utxos, amount);
+    const selectedUTXOs = utxos; //selectUTXO(utxos, amount); We must implement a selecting algorithm MINE AS WELL AS BERRY HAVE SOME ISSUES
 
-    let txBuilder = await builder();
+    let txBuilder = await makeTxBuilder();
 
     //  every utxo in the selectedUtxos gets  added to the transaction
     for (let i = 0; i < selectedUTXOs.length; i++) {
@@ -51,8 +51,12 @@ export const sendLovelacestoAddres = async function (
         transactionWitnessSet.to_bytes()
       )
     );
-
-    const Signature = await window.cardano.signTx(toHex(tx.to_bytes(tx)));
+    let Signature;
+    try {
+      Signature = await window.cardano.signTx(toHex(tx.to_bytes(tx)));
+    } catch (e) {
+      return "SIGNING-ERROR";
+    }
 
     const txVkeyWitnesses = Loader.Cardano.TransactionWitnessSet.from_bytes(
       fromHex(Signature)
@@ -65,11 +69,14 @@ export const sendLovelacestoAddres = async function (
       tx.auxiliary_data()
     );
 
-    /*  if (SignedTx === "SIGNING-ERROR") {
-      return SignedTx;
-    } */
+    let txHash;
 
-    const txHash = await window.cardano.submitTx(toHex(signedTx.to_bytes()));
+    try {
+      txHash = await window.cardano.submitTx(toHex(signedTx.to_bytes()));
+    } catch (e) {
+      return "SUBMITION-ERROR";
+    }
+
     console.log(`Transaction submited, with TxHash ${txHash}`);
     return txHash;
   }
@@ -99,37 +106,38 @@ export async function getLatestParams() {
   }
 }
 
-export const builder = async () => {
+export async function maketxconfigBuilder() {
   await Loader.load();
-  const latestParameters = await getLatestParams();
-  const params = [
-    latestParameters.min_fee_a,
-    latestParameters.min_fee_b,
-    latestParameters.min_utxo,
-    latestParameters.pool_deposit,
-    latestParameters.key_deposit,
-    latestParameters.max_val_size,
-    latestParameters.max_tx_size,
-  ].map((x) => x.toString());
+  const p = await initTx();
+  let configBuilder = Loader.Cardano.TransactionBuilderConfigBuilder.new();
 
-  return Loader.Cardano.TransactionBuilder.new(
-    // linear fee parameters (a*size + b)
+  configBuilder = configBuilder.fee_algo(
     Loader.Cardano.LinearFee.new(
-      Loader.Cardano.BigNum.from_str(params[0]),
-      Loader.Cardano.BigNum.from_str(params[1])
-    ),
-    // minimum utxo value
-    Loader.Cardano.BigNum.from_str(params[2]),
-    // pool deposit
-    Loader.Cardano.BigNum.from_str(params[3]),
-    // key deposit
-    Loader.Cardano.BigNum.from_str(params[4]),
-    //  max-value-size
-    params[5],
-    // max-tx-size
-    params[6]
+      Loader.Cardano.BigNum.from_str(p.linearFee.minFeeA),
+      Loader.Cardano.BigNum.from_str(p.linearFee.minFeeB)
+    )
   );
-};
+  configBuilder = configBuilder.coins_per_utxo_word(
+    Loader.Cardano.BigNum.from_str(p.coinsPerUtxoWord)
+  );
+  configBuilder = configBuilder.pool_deposit(
+    Loader.Cardano.BigNum.from_str(p.poolDeposit)
+  );
+  configBuilder = configBuilder.key_deposit(
+    Loader.Cardano.BigNum.from_str(p.keyDeposit)
+  );
+  configBuilder = configBuilder.max_tx_size(p.maxTxSize);
+  configBuilder = configBuilder.max_value_size(p.maxValSize);
+  configBuilder = configBuilder.prefer_pure_change(true);
+  const config = configBuilder.build();
+  return config;
+}
+
+export async function makeTxBuilder() {
+  const config = await maketxconfigBuilder();
+  const txBuilder = Loader.Cardano.TransactionBuilder.new(config);
+  return txBuilder;
+}
 
 export const addInputs = async (txBuilder, utxo) => {
   await Loader.load();

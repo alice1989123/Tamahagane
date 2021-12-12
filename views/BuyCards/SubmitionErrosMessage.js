@@ -42,14 +42,10 @@ function SubmitionError({ error, setError }) {
           </ModalBody>
 
           <ModalFooter>
-            <Button colorScheme="blue" mr={3}>
-              Buy Items
-            </Button>
             <Button
               onClick={() => {
                 setError(false);
               }}
-              variant="ghost"
               colorScheme="blue"
             >
               Go Back
