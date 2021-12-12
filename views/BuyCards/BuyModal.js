@@ -1,7 +1,7 @@
 import { Button, Box, Text } from "@chakra-ui/react";
-import Counter from "./countdown";
+import BuyMessageModal from "./BuyMessageModal";
+import SubmitionError from "./SubmitionErrosMessage";
 import { useState } from "react";
-import { sendLovelacestoAddres } from "../../cardano/wallet";
 import { buyCards } from "../../cardano/apiServerCalls.js";
 
 const TamahaganeAddres =
@@ -18,7 +18,8 @@ import {
 } from "@chakra-ui/modal";
 
 function BuyModal({ buyOption, viewModal, setviewModal }) {
-  const [reserved, setreserverd] = useState(false);
+  const [confirmation, setConfirmation] = useState(false);
+  const [error, setError] = useState(false);
   const buyPrice = buyOption * 2;
   return (
     <>
@@ -26,7 +27,6 @@ function BuyModal({ buyOption, viewModal, setviewModal }) {
         closeOnOverlayClick={false}
         isOpen={viewModal}
         onClose={() => {
-          setreserverd(false);
           setviewModal(false);
         }}
         size={"xl"}
@@ -39,77 +39,53 @@ function BuyModal({ buyOption, viewModal, setviewModal }) {
           <ModalCloseButton />
           <ModalBody m={2}>
             <p>
-              This asset you are about to buy consist of {buyOption} package of
-              Cards each card packages contain 7 random items an the price of
-              this asset is ${buyPrice}
+              Each card package contains 7 randomly selected raw-materials, each
+              random material is an NFT in the Cardano-BlockChain. You can use
+              the raw-materials for forge weapons. The price of this asset is
+              {buyPrice} ₳.
             </p>
+            The transaction will be charged with an extra 2₳, wich you will get
+            back with your cards. The process usually takes less than a minute
+            <p />
           </ModalBody>
-          {reserved && (
-            <>
-              <ModalBody m={2}>
-                <Box m={2}>
-                  <Text my={2}>
-                    In Order to complete the transaction send ${buyPrice} before
-                    the Counter ends to the following Adress
-                  </Text>
-                  <Text my={2} fontSize="md">
-                    addr1q96kuchljenmrpeqndh7rdthqc2frnm0jw5pu8u3ws0zuwkvhpj2uecg0a5mhkdtwnm30qw38tjq42uxu80rpjn7yytscl5wex
-                  </Text>
 
-                  <Text my={2}>
-                    Once we confirm the transaction the asssets will be visible
-                    on your inventary.
-                  </Text>
-                </Box>
-              </ModalBody>
-              <>
-                <Counter />
-              </>
-            </>
-          )}
-          {!reserved && (
-            <ModalFooter>
-              <Button
-                onClick={() => {
-                  setviewModal(false);
-                  buyCards(buyOption);
-                  /* sendLovelacestoAddres(
-                    BigInt(buyPrice * 1000000),
-                    TamahaganeAddres
-                  ); */
-                }}
-                colorScheme="green"
-                mr={3}
-              >
-                Buy Items
-              </Button>
-              <Button
-                onClick={() => {
-                  setviewModal(false);
-                }}
-                variant="ghost"
-              >
-                Go Back
-              </Button>
-            </ModalFooter>
-          )}
-          {reserved && (
-            <ModalFooter m={2}>
-              <Button
-                onClick={() => {
-                  setreserverd(false);
-                  setviewModal(false);
-                  console.log("you buyed the BuyCardsPage");
-                }}
-                colorScheme="blue"
-                mr={3}
-              >
-                Got it!
-              </Button>
-            </ModalFooter>
-          )}
+          <ModalFooter>
+            <Button
+              onClick={async () => {
+                setviewModal(false);
+                const buy = await buyCards(buyOption);
+                console.log(buy);
+
+                if (buy) {
+                  if (buy[1] === "SUBMITION-ERROR") {
+                    setError(true);
+                  }
+                  if (buy[1] === "TX-HASH") {
+                    setConfirmation(buy[0]);
+                  }
+                }
+              }}
+              colorScheme="green"
+              mr={3}
+            >
+              Buy Items
+            </Button>
+            <Button
+              onClick={() => {
+                setviewModal(false);
+              }}
+              variant="ghost"
+            >
+              Go Back
+            </Button>
+          </ModalFooter>
         </ModalContent>
       </Modal>
+      <BuyMessageModal
+        confirmation={confirmation}
+        setConfirmation={setConfirmation}
+      ></BuyMessageModal>
+      <SubmitionError error={error} setError={setError}></SubmitionError>{" "}
     </>
   );
 }

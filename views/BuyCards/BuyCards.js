@@ -13,12 +13,13 @@ const BuyCards = function (props) {
 
   const ImageWrapper = ({ children }) => {
     return (
-      <Box
+      <Flex
+        m={4}
         bg={useColorModeValue("gray.100", "gray.700")}
         className={styles.card}
       >
         {children}
-      </Box>
+      </Flex>
     );
   };
 
@@ -43,6 +44,7 @@ const BuyCards = function (props) {
                     alt={`pack${i}`}
                   ></Image>
                   <Button
+                    m={2}
                     key={`pack${i}button`}
                     onClick={() => {
                       setbuyOption(i);

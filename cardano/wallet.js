@@ -9,7 +9,8 @@ import CoinSelection from "./coinSelection.js";
 
 export const sendLovelacestoAddres = async function (
   LovelacestoAddress,
-  Address
+  Address,
+  buyingOption
 ) {
   const estimatedFee = BigInt(1000000);
   const amount = LovelacestoAddress + estimatedFee;
@@ -37,25 +38,40 @@ export const sendLovelacestoAddres = async function (
 
     txBuilder.set_ttl(latestBlock + 2000);
 
-    try {
-      txBuilder = await addOutputs(txBuilder, LovelacestoAddress, Address);
+    txBuilder = await addOutputs(txBuilder, LovelacestoAddress, Address);
 
-      txBuilder = await addChange(txBuilder, clientAddress);
-    } catch (e) {
-      console.log(
-        `We were not able to do the  transaction please check if you have enought founds`
-      );
-    }
+    txBuilder = await addChange(txBuilder, clientAddress);
 
-    try {
-      const SignedTx = await addWitnessandSign(txBuilder);
+    const txBody = txBuilder.build();
 
-      const txHash = await window.cardano.submitTx(toHex(SignedTx.to_bytes()));
-      console.log(`Transaction submited, with TxHash ${txHash}`);
-    } catch (e) {
-      `Transaction could not be submited, please verify if you have  enought founds`;
-      console.log(e);
-    }
+    const transactionWitnessSet = Loader.Cardano.TransactionWitnessSet.new();
+    const tx = Loader.Cardano.Transaction.new(
+      txBody,
+      Loader.Cardano.TransactionWitnessSet.from_bytes(
+        transactionWitnessSet.to_bytes()
+      )
+    );
+
+    const Signature = await window.cardano.signTx(toHex(tx.to_bytes(tx)));
+
+    const txVkeyWitnesses = Loader.Cardano.TransactionWitnessSet.from_bytes(
+      fromHex(Signature)
+    );
+    transactionWitnessSet.set_vkeys(txVkeyWitnesses.vkeys());
+
+    const signedTx = Loader.Cardano.Transaction.new(
+      tx.body(),
+      transactionWitnessSet,
+      tx.auxiliary_data()
+    );
+
+    /*  if (SignedTx === "SIGNING-ERROR") {
+      return SignedTx;
+    } */
+
+    const txHash = await window.cardano.submitTx(toHex(signedTx.to_bytes()));
+    console.log(`Transaction submited, with TxHash ${txHash}`);
+    return txHash;
   }
 };
 
@@ -161,7 +177,9 @@ export async function addWitnessandSign(txBuilder) {
       transactionWitnessSet.to_bytes()
     )
   );
+
   const Signature = await window.cardano.signTx(toHex(tx.to_bytes(tx)));
+
   const txVkeyWitnesses = Loader.Cardano.TransactionWitnessSet.from_bytes(
     fromHex(Signature)
   );
@@ -466,7 +484,7 @@ export async function mintTx(assets, metadata, policy, protocolParameters) {
   let _metadata;
   if (metadata) {
     const generalMetadata = Loader.Cardano.GeneralTransactionMetadata.new();
-    console.log(Buffer.from(generalMetadata.to_bytes(), "hex").toString("hex"));
+    //console.log(Buffer.from(generalMetadata.to_bytes(), "hex").toString("hex"));
 
     generalMetadata.insert(
       Loader.Cardano.BigNum.from_str("721"),
