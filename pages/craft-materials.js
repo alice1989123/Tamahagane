@@ -18,6 +18,7 @@ import { MintWeapon, metadataBuilder } from "../cardano/wallet.js";
 import weapons from "../constants/weaponsRecipes.js";
 import SelectMaterialsDropDown from "../components/MaterialsDropdown.js";
 import { burningTokens, forgeWeapon } from "../cardano/apiServerCalls.js";
+import styles from "./CraftMaterials.module.scss";
 
 const infuragateway = "https://ipfs.infura.io/";
 
@@ -38,17 +39,25 @@ const assetBuilder = function (selectedRecipe) {
   return metadata;
 };
 
+const isRecipeComplete_ = function (selectedRecipe, selectedAsset) {
+  return selectedAsset.length === 3 && selectedRecipe;
+};
 export default function CraftMaterials() {
   const [NFTs, setNFTs] = useState([]);
   const [selectedRecipe, setselectedRecipe] = useState(null);
   const [loadingState, setLoadingState] = useState("not-loaded");
-  const [selectedAsset, setselectedAsset] = useState(null);
+  const [selectedAsset, setselectedAsset] = useState([]);
   const background = useColorModeValue("white", "gray.750");
   const background1 = useColorModeValue("gray.100", "gray.700");
+  const [isRecipeComplete, setIsRecipeComplete] = useState(false);
 
   useEffect(() => {
     loadNFTs();
   }, []);
+  useEffect(() => {
+    setIsRecipeComplete(isRecipeComplete_(selectedRecipe, selectedAsset)),
+      [selectedRecipe, selectedAsset];
+  });
 
   async function loadNFTs() {
     const address = await addressToBech32();
@@ -130,6 +139,7 @@ export default function CraftMaterials() {
             selectedAsset={selectedAsset}
             setselectedAsset={setselectedAsset}
             filterOption={"material"}
+            isRecipeComplete={isRecipeComplete}
           ></ListAssets>
         </GridItem>
         <GridItem
@@ -160,7 +170,10 @@ export default function CraftMaterials() {
             ></Image>
 
             <Button
+              isDisabled={!isRecipeComplete}
               onClick={() => {
+                console.log(selectedAsset);
+                console.log(selectedRecipe);
                 forgeWeapon(selectedAsset);
               }}
               display="flex"
@@ -210,6 +223,11 @@ export default function CraftMaterials() {
               <SimpleGrid columns={1} spacing={10}>
                 {weapons.map((nft, i) => (
                   <GridItem
+                    className={
+                      JSON.stringify(selectedRecipe) === JSON.stringify(nft)
+                        ? styles.selectedCard
+                        : styles.card
+                    }
                     w="100%"
                     key={i}
                     _hover={{

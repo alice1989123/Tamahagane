@@ -6,25 +6,6 @@ import { GridItem, SimpleGrid } from "@chakra-ui/layout";
 import { useColorModeValue } from "@chakra-ui/color-mode";
 import styles from "./LisAssets.module.scss";
 
-const imageWraperStyle = {
-  //borderWidth: "5px",
-  //borderStyle: "solid",
-  //borderColor: "red",
-  //backgroundColor: "green",
-  maxWidth: "310px",
-  //borderRadius: "10px",
-};
-
-const imageStyle = {
-  //borderWidth: "5px",
-  borderStyle: "solid",
-  borderColor: "red",
-  backgroundColor: "green",
-  maxWidth: "300px",
-  borderRadius: "10px",
-  hover: { borderWidth: "10px" },
-};
-
 const infuragateway = "https://ipfs.infura.io/";
 
 const getMetadata = async function (asset) {
@@ -49,6 +30,7 @@ export default function ListAssets({
   setselectedAsset,
   filterOption,
   categorie,
+  isRecipeComplete,
 }) {
   const [NFTs, setNFTs] = useState([]);
   const [loadingState, setLoadingState] = useState("not-loaded");
@@ -134,8 +116,18 @@ export default function ListAssets({
         NFTs.map((nft, i) => (
           <GridItem
             className={
-              selectedAsset && nft.asset === selectedAsset[0].unit
-                ? styles.selectedCard
+              selectedAsset
+                .map((x) => JSON.stringify(x))
+                .includes(
+                  JSON.stringify({
+                    metadata: `${nft.onchain_metadata}`,
+                    quantity: `${nft.quantity}`,
+                    unit: `${nft.asset}`,
+                  })
+                )
+                ? isRecipeComplete
+                  ? styles.selectedCardComplete
+                  : styles.selectedCard
                 : styles.card
             }
             key={i}
@@ -154,15 +146,31 @@ export default function ListAssets({
                     "ipfs/"
                   )}`
                 }
-                onClick={() =>
-                  setselectedAsset([
-                    {
-                      unit: `${nft.asset}`,
-                      quantity: `${nft.quantity}`,
-                      metadata: `${nft.onchain_metadata}`,
-                    },
-                  ])
-                }
+                onClick={() => {
+                  const asset = {
+                    metadata: `${nft.onchain_metadata}`,
+                    quantity: `${nft.quantity}`,
+                    unit: `${nft.asset}`,
+                  };
+
+                  console.log(selectedAsset);
+
+                  console.log(selectedAsset.includes(asset));
+
+                  if (
+                    selectedAsset
+                      .map((x) => JSON.stringify(x))
+                      .includes(JSON.stringify(asset))
+                  ) {
+                    setselectedAsset(
+                      selectedAsset.filter(
+                        (x) => !(JSON.stringify(x) === JSON.stringify(asset))
+                      )
+                    );
+                  } else {
+                    setselectedAsset([asset, ...selectedAsset]);
+                  }
+                }}
               />
             }
             <div>

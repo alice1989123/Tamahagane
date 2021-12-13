@@ -72,42 +72,10 @@ body {
   background-position: center;
   background-repeat: no-repeat;
   width: fit-content;
-  border-color: rgb(255, 1, 1);
+  border-color: rgb(1, 252, 239);
 }
 
 .selectedCard :hover {
-  box-shadow: rgba(2, 8, 20, 0.1) 0px 0.35em 1.175em,
-    rgba(2, 8, 20, 0.08) 0px 0.175em 0.5em;
-  transform: translateY(-3px) scale(1.05);
-}
-
-.selectedCardComplete {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-
-  font-size: 3rem;
-
-  box-shadow: rgba(3, 8, 20, 0.1) 0px 0.15rem 0.5rem,
-    rgba(2, 8, 20, 0.1) 0px 0.075rem 0.175rem;
-
-  border-radius: 4px;
-
-  transition: all 500ms;
-  padding: 2px;
-  border-width: 2px;
-
-  border-style: solid;
-
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  width: fit-content;
-  border-color: rgb(10, 248, 1);
-}
-
-.selectedCardComplete :hover {
   box-shadow: rgba(2, 8, 20, 0.1) 0px 0.35em 1.175em,
     rgba(2, 8, 20, 0.08) 0px 0.175em 0.5em;
   transform: translateY(-3px) scale(1.05);
