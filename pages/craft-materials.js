@@ -19,6 +19,7 @@ import weapons from "../constants/weaponsRecipes.js";
 import SelectMaterialsDropDown from "../components/MaterialsDropdown.js";
 import { burningTokens, forgeWeapon } from "../cardano/apiServerCalls.js";
 import styles from "./CraftMaterials.module.scss";
+import BuyMessageModal from "./craftingPage/BuyMessageModal";
 
 const infuragateway = "https://ipfs.infura.io/";
 
@@ -50,6 +51,7 @@ export default function CraftMaterials() {
   const background = useColorModeValue("white", "gray.750");
   const background1 = useColorModeValue("gray.100", "gray.700");
   const [isRecipeComplete, setIsRecipeComplete] = useState(false);
+  const [confirmation, setConfirmation] = useState(false);
 
   useEffect(() => {
     loadNFTs();
@@ -171,10 +173,14 @@ export default function CraftMaterials() {
 
             <Button
               isDisabled={!isRecipeComplete}
-              onClick={() => {
+              onClick={async () => {
                 console.log(selectedAsset);
                 console.log(selectedRecipe);
-                forgeWeapon(selectedAsset);
+                const confirmation = await forgeWeapon(
+                  selectedAsset,
+                  selectedRecipe
+                );
+                setConfirmation(confirmation);
               }}
               display="flex"
               colorScheme="teal"
@@ -282,6 +288,10 @@ export default function CraftMaterials() {
           </SimpleGrid>
         </GridItem>
       </Grid>
+      <BuyMessageModal
+        confirmation={confirmation}
+        setConfirmation={setConfirmation}
+      ></BuyMessageModal>
     </Box>
   );
 }

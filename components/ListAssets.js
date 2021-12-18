@@ -117,17 +117,19 @@ export default function ListAssets({
           <GridItem
             className={
               selectedAsset
-                .map((x) => JSON.stringify(x))
-                .includes(
-                  JSON.stringify({
-                    metadata: `${nft.onchain_metadata}`,
-                    quantity: `${nft.quantity}`,
-                    unit: `${nft.asset}`,
-                  })
-                )
-                ? isRecipeComplete
-                  ? styles.selectedCardComplete
-                  : styles.selectedCard
+                ? selectedAsset
+                    .map((x) => JSON.stringify(x))
+                    .includes(
+                      JSON.stringify({
+                        metadata: `${nft.onchain_metadata}`,
+                        quantity: `${nft.quantity}`,
+                        unit: `${nft.asset}`,
+                      })
+                    )
+                  ? isRecipeComplete
+                    ? styles.selectedCardComplete
+                    : styles.selectedCard
+                  : styles.card
                 : styles.card
             }
             key={i}

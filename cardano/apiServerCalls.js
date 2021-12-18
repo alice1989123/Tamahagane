@@ -59,7 +59,7 @@ export async function buyCards(buyOption) {
   }
 }
 
-export async function forgeWeapon(tokensToBurn) {
+export async function forgeWeapon(tokensToBurn, nFTtoForge) {
   const address = await addressToBech32();
   const balance = await window.cardano.getBalance();
   const utxos = await window.cardano.getUtxos();
@@ -69,10 +69,12 @@ export async function forgeWeapon(tokensToBurn) {
     balance: balance,
     utxos: utxos,
     tokensToBurn: tokensToBurn,
+    nFTtoForge: nFTtoForge,
   });
   console.log(tokensToBurn);
   const signedTx = await signTx_(response.data);
   const txHash = await submitTx(signedTx);
 
   console.log(`transaction submited with txHash ${txHash}`);
+  return txHash;
 }
