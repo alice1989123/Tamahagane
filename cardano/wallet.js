@@ -3,10 +3,16 @@ import {
   LATEST_BLOCK,
   ADDRESSES,
   LATEST_PARAMETERS,
-} from "../constants/API/v0/routes";
+} from "../constants/routes.js";
 import axios from "axios";
 import CoinSelection from "./coinSelection.js";
 
+export function toHex(bytes) {
+  return Buffer.from(bytes).toString("hex");
+}
+export function fromHex(hex) {
+  return Buffer.from(hex, "hex");
+}
 export const sendLovelacestoAddres = async function (
   LovelacestoAddress,
   Address,

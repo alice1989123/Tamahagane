@@ -1,6 +1,6 @@
 import Address from "../../views/Address/Address";
 const axios = require("axios");
-import { ADDRESSES } from "../../constants/API/v0/routes";
+import { ADDRESSES } from "../../constants/routes";
 
 export default function AddressPage(props) {
   return <Address {...props} />;
