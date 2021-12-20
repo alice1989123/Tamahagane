@@ -1,15 +1,4 @@
-const weapons = [
-  /* {
-    label: "Iron Ingot Bloom",
-    value: "ironIngot",
-    img: "",
-  },
-  {
-    label: "WOOTZ-Steel Inglot",
-    value: "wootzInglot",
-    img: "",
-  }, */
-  /*  { label: "TAMAHAGANE-Steel Ingot", value: "tamahaganeInglot", img: "" }, */
+const weaponsURLs = [
   {
     label: "Anvil",
     value: "anvil",
@@ -92,4 +81,4 @@ const weapons = [
   },
 ];
 
-export default weapons;
+export default weaponsURLs;

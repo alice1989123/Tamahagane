@@ -250,9 +250,6 @@ export const selectUTXO = function (utxos, amount) {
   return utxos.slice(0, getIndex(balances, amount));
 };
 
-export const toHex = (bytes) => Buffer.from(bytes).toString("hex");
-export const fromHex = (hex) => Buffer.from(hex, "hex");
-
 export async function getLatestBlock() {
   try {
     const config = {

@@ -33,30 +33,102 @@ export const materials = [
 ];
 
 export const weapons = [
-  { label: "Anvil", value: "anvil", class: "tool" },
-  { label: "Hammer", value: "hammer", class: "tool" },
-  { label: "Tongs", value: "tongs", class: "tool" },
-  { label: "Splitter", value: "splitter", class: "tool" },
-  { label: "Sword", value: "sword", class: "uncommonWeapon" },
-  { label: "Axe", value: "axe", class: "uncommonWeapon" },
-  { label: "Spear", value: "spear", class: "uncommonWeapon" },
-  { label: "Dagger", value: "dagger", class: "uncommonWeapon" },
-  { label: "Crusader Sword", value: "crusaderSword", class: "rareWeapon" },
-  { label: "Medieval Sword", value: "medievalSword", class: "rareWeapon" },
-  { label: "Persian Shamir Sword", value: "persianSword", class: "epicWeapon" },
+  {
+    label: "Anvil",
+    value: "anvil",
+    class: "tool",
+    recipe: [0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 6],
+  },
+  {
+    label: "Hammer",
+    value: "hammer",
+    class: "tool",
+    recipe: [0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 3],
+  },
+  {
+    label: "Tongs",
+    value: "tongs",
+    class: "tool",
+    recipe: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+  },
+  {
+    label: "Splitter",
+    value: "splitter",
+    class: "tool",
+    recipe: [0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 3],
+  },
+  {
+    label: "Sword",
+    value: "sword",
+    class: "uncommonWeapon",
+    recipe: [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 3],
+  },
+  {
+    label: "Axe",
+    value: "axe",
+    class: "uncommonWeapon",
+    recipe: [0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 3],
+  },
+  {
+    label: "Spear",
+    value: "spear",
+    class: "uncommonWeapon",
+    recipe: [0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 2],
+  },
+  {
+    label: "Dagger",
+    value: "dagger",
+    class: "uncommonWeapon",
+    recipe: [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 2],
+  },
+  {
+    label: "Crusader Sword",
+    value: "crusaderSword",
+    class: "rareWeapon",
+    recipe: [2, 0, 0, 0, 1, 0, 1, 0, 0, 0, 3],
+  },
+  {
+    label: "Medieval Sword",
+    value: "medievalSword",
+    class: "rareWeapon",
+    recipe: [2, 0, 0, 0, 1, 0, 1, 0, 0, 0, 3],
+  },
+  {
+    label: "Persian Shamir Sword",
+    value: "persianSword",
+    class: "epicWeapon",
+    recipe: [2, 0, 0, 0, 0, 0, 1, 1, 3, 0, 0],
+  },
   {
     label: "Persian Jambiya Dagger",
     value: "persianDagger",
     class: "epicWeapon",
+    recipe: [2, 0, 0, 0, 0, 0, 1, 0, 3, 0, 0],
   },
-  { label: "Japanese Katana", value: "japaneseKatana", class: "epicWeapon" },
+  {
+    label: "Japanese Katana",
+    value: "japaneseKatana",
+    class: "epicWeapon",
+    recipe: [0, 0, 0, 1, 1, 0, 1, 1, 0, 3, 0],
+  },
   {
     label: "Japanese Wakizashi",
     value: "japaneseWakizashi",
     class: "epicWeapon",
+    recipe: [0, 0, 0, 1, 1, 0, 1, 0, 0, 3, 0],
   },
-  { label: "Crystal Jade Sword", value: "jadeSword", class: "legendaryWeapon" },
-  { label: "Gemed Snake Sword", value: "snakeSword", class: "legendaryWeapon" },
+  {
+    label: "Crystal Jade Sword",
+    value: "jadeSword",
+    class: "legendaryWeapon",
+    recipe: [0, 0, 0, 0, 1, 3, 1, 1, 0, 0, 1],
+  },
+  {
+    label: "Gemed Snake Sword",
+    value: "snakeSword",
+    class: "legendaryWeapon",
+    recipe: [0, 0, 0, 0, 2, 1, 1, 3, 0, 0, 3],
+  },
 ];
 
 export const assets = materials.concat(weapons);

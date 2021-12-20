@@ -3,7 +3,6 @@ import axios from "axios";
 import { useState, useEffect } from "react";
 import {
   Text,
-  Heading,
   Box,
   Grid,
   GridItem,
@@ -14,14 +13,14 @@ import { Button } from "@chakra-ui/react";
 import Image from "next/image";
 import ListAssets from "../components/ListAssets";
 import { useColorModeValue } from "@chakra-ui/color-mode";
-import { MintWeapon, metadataBuilder } from "../cardano/wallet.js";
-import weapons from "../constants/weaponsRecipes.js";
+import { metadataBuilder } from "../cardano/wallet.js";
+import weaponsURLs from "../constants/weaponsURLs.js";
 import SelectMaterialsDropDown from "../components/MaterialsDropdown.jsx";
 import { forgeWeapon } from "../cardano/apiServerCalls.js";
 import styles from "./CraftMaterials.module.scss";
 import BuyMessageModal from "./craftingPage/BuyMessageModal";
-
-const infuragateway = "https://ipfs.infura.io/";
+import { materials, weapons } from "../constants/assets.js";
+import { fromHex } from "../cardano/wallet.js";
 
 const assetBuilder = function (selectedRecipe) {
   const metadata_ = metadataBuilder(
@@ -40,8 +39,38 @@ const assetBuilder = function (selectedRecipe) {
   return metadata;
 };
 
-const isRecipeComplete_ = function (selectedRecipe, selectedAsset) {
+/* const isRecipeComplete_ = function (selectedRecipe, selectedAsset) {
   return selectedAsset.length === 3 && selectedRecipe;
+}; */
+
+const isRecipeComplete_ = function (selectedRecipe, selectedAsset) {
+  function materialCounter(selectedAsset, material) {
+    if (selectedAsset) {
+      const filteredAssets = selectedAsset.filter(
+        (x) =>
+          fromHex(x.unit.slice(56)).toString().replace(/\d+/g, "") ==
+          material.value
+      );
+      return filteredAssets.length;
+    } else {
+      return 0;
+    }
+  }
+  if (selectedRecipe && selectedRecipe.value) {
+    const selectedRecipeData = weapons.filter(
+      (x) => x.value == selectedRecipe.value
+    )[0].recipe;
+    // const selectedAssetsData = []
+    console.log(selectedRecipeData);
+    let selectedAssetData = [];
+    materials.forEach((material) => {
+      const count = materialCounter(selectedAsset, material);
+      selectedAssetData.push(count);
+    });
+    return (
+      JSON.stringify(selectedRecipeData) == JSON.stringify(selectedAssetData)
+    );
+  }
 };
 export default function CraftMaterials() {
   const [filter, setFilter] = useState("rawMaterial");
@@ -177,6 +206,7 @@ export default function CraftMaterials() {
               onClick={async () => {
                 console.log(selectedAsset);
                 console.log(selectedRecipe);
+                console.log(isRecipeComplete_(selectedRecipe, selectedAsset));
                 const confirmation = await forgeWeapon(
                   selectedAsset,
                   selectedRecipe
@@ -228,7 +258,7 @@ export default function CraftMaterials() {
               p={[1, 2, 4]}
             >
               <SimpleGrid columns={1} spacing={10}>
-                {weapons.map((nft, i) => (
+                {weaponsURLs.map((nft, i) => (
                   <GridItem
                     className={
                       JSON.stringify(selectedRecipe) === JSON.stringify(nft)
