@@ -13,82 +13,82 @@ const weapons = [
   {
     label: "Anvil",
     value: "anvil",
-    img: "QmZK3Vo812NC9GaRtzFdH6wRxyryzkYTsruRo9xWC277EH",
+    img: "QmXba3Q2SY7h1EZAvCAKBpbiT5Gk7rQFDVd5r9Moj6k2vb",
   },
   {
     label: "Hammer",
     value: "hammer",
-    img: "Qmf7VJ1bU2Qo31AHPT3MBg5LmtQuQncpf3BrdMweEsNdfi",
+    img: "QmYbtasEuTb5zWf8iRmjbdGk7xqBP2XULqKvgCLSDdjPuE",
   },
   {
     label: "Tongs",
     value: "tongs",
-    img: "QmQ2tm1WpHCP6kUhMJDHiZ8yBZ1SQUYm5cxcAeuhKFCVQo",
+    img: "QmeR4Di25ZtYzhotXxbok3TohSPDyyoK8GbXsz9YMb8zEg",
   },
-  /* {
+  {
     label: "Splitter",
     value: "splitter",
-    img: "QmS8x5XZpU2s7ovoxvgEQddD69NDhTpJeNiGwyxxQdp7cR",
-  }, */
+    img: "QmdFkSEXaTBD3VtfYSsHLXSGLRciKyrYYT219cUJoJm9g1",
+  },
   {
     label: "Sword",
     value: "sword",
-    img: "QmS7dPwfEQHQGaUUTxgze9HNs6zi32oEWHi8bFzKAf5tzH",
+    img: "QmTn8Hb7kaaBQeb9CSj2838AzM6Dz58ZLUaqR6uqXXe1TW",
   },
   {
     label: "Axe",
     value: "axe",
-    img: "QmWZGrn3HkfBJzZHi5qiJ4wdFPmMjWKw4YegBiRRoqhTxU",
+    img: "QmVscVGyLGgqGesUDbQWb1gysTcLgmrLr4uFbXj85TMupT",
   },
   {
     label: "Spear",
     value: "spear",
-    img: "QmWtdX5GMunZGgDF1j3RRuEvg1u7noJ2qo2yvxzeReyS6V",
+    img: "QmUCeA7prNed89rGvVhDbibouMVu6FkXJssFAwUwvTYe4N",
   },
   {
     label: "Dagger",
     value: "dagger",
-    img: "QmT9JhwZVn3KYzDdodw2rs8NaLJmDJteAYx2aSBH2gfs1Q",
+    img: "QmSPkcxZ9mqrSW4AjWhXn2x5iNQsYSYb2mvgLJ3t6PLtSj",
   },
   {
     label: "Crusader Sword",
     value: "crusaderSword",
-    img: "QmfVHgRhmQRsgebaxPU9kNUmQR9aDzHRqtpTuqmeE9McgM",
+    img: "QmW43ZLxGeFahp94k8oaH4M6KAEQ1nNcq3kq2yrjCEAjiS",
   },
   {
     label: "Medieval Sword",
     value: "medievalSword",
-    img: "QmRQcF7drQGWR3qGPGi9KZxhmC7niNmSPExLujtsZ9VL8N",
+    img: "QmPQQpfnEVNB5Bn12BWwSso5vzf3mAmZvC6fYrhi2X6cuy",
   },
   {
     label: "Persian Shamir Sword",
     value: "persianSword",
-    img: "QmazCRqaevxLvzFs3bFxkMCRsBDiCq1p4XWHkbwiNAN53n",
+    img: "QmQDxRt2sdyAfrXrKvarJEDu1dccbi5opUqCrBfS7j8pjg",
   },
   {
     label: "Persian Jambiya Dagger",
     value: "persianDagger",
-    img: "QmVTXXzGiWtmHrHDMM9i2AaBVCdt1DvDC2MuJqvYDvRvts",
+    img: "QmZmAh4QLkUuF6tcjvKS3fg6vKqKB5XvRR1j5h2oiMHDVq",
   },
   {
     label: "Japanese Katana",
     value: "japaneseKatana",
-    img: "QmT9XiaLeoW3RMPqk6vz2mqd32aKFXLZLvq3V7E5XUJqb6",
+    img: "QmUg3oDYi2GkQ6qfzPs73YmxLPum1fb3pamhmwiKxx7MXp",
   },
   {
     label: "Japanese Wakizashi",
     value: "japaneseWakizashi",
-    img: "Qme6xsAR5wVi3BD3v1W12pVhfp4qynn5E68PuunFvEDkTF",
+    img: "QmTMQyufzTddWpwRgVGMby8JnSSRmiybaQ9qP5g2mVntZB",
   },
   {
     label: "Crystal Jade Sword",
     value: "jadeSword",
-    img: "QmPhxQKexzndec7WkwUKqegnd9cewUhE2J3hGdAV2oFeVC",
+    img: "QmSoUjx68YCjT4GMKTpkyrttveBZiHY3z3BBCeZkgqXDHv",
   },
   {
     label: "Gemed Snake Sword",
     value: "snakeSword",
-    img: "QmVRCZZJntKtRnH3dBdoREw1iK2YhMRgZLUaUkRf3R6XU6",
+    img: "QmTy5qWQQm548pESiKVYvDM4uRGhVC3km4nGQLx3882S2N",
   },
 ];
 

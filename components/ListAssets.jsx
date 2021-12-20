@@ -1,42 +1,31 @@
-import { addressToBech32 } from "../cardano/wallet.js";
+import { addressToBech32 , toHex, fromHex } from "../cardano/wallet.js";
 import axios from "axios";
-import { ADDRESSES, ASSETS } from "../constants/API/v0/routes";
+import {   INFURA } from "../constants/routes";
 import { useState, useEffect } from "react";
 import { GridItem, SimpleGrid } from "@chakra-ui/layout";
 import { useColorModeValue } from "@chakra-ui/color-mode";
 import styles from "./LisAssets.module.scss";
+import { selector } from "../constants/selector";
 
-const infuragateway = "https://ipfs.infura.io/";
 
-const getMetadata = async function (asset) {
-  try {
-    // Adds Blockfrost project_id to req header
-    const config = {
-      headers: {
-        project_id: process.env.NEXT_PUBLIC_BLOCKFROST_PROJECT_ID,
-      },
-    };
-    const response = await axios.get(`${ASSETS}/${asset}`, config);
 
-    return response.data;
-  } catch (error) {
-    console.log(error.response);
-    return null;
-  }
-};
+
+
 
 export default function ListAssets({
   selectedAsset,
   setselectedAsset,
   filterOption,
-  categorie,
+  isInventory,
   isRecipeComplete,
 }) {
+
   const [NFTs, setNFTs] = useState([]);
   const [loadingState, setLoadingState] = useState("not-loaded");
   useEffect(() => {
     loadNFTs();
-  }, []);
+  }, [filterOption]);
+  console.log(filterOption)
 
   async function loadNFTs() {
     await window.cardano.enable();
@@ -46,12 +35,6 @@ export default function ListAssets({
     const getAssets = async function () {
       // This function trows an error 404 if the address has not had any tx...  FIX!!!
       try {
-        // Adds Blockfrost project_id to req header
-        const config = {
-          headers: {
-            project_id: process.env.NEXT_PUBLIC_BLOCKFROST_PROJECT_ID,
-          },
-        };
         const response = await axios.post("http://localhost:3001/api/assetss", {
           address: address,
         });
@@ -67,7 +50,10 @@ export default function ListAssets({
     if (!data) {
       setLoadingState("loaded");
     } else {
-      const data1 = data.filter((x) => x != "lovelace");
+      console.log(data.map(x => fromHex(x.slice(56)).toString().replace(/\d+/g, "")))
+      const data1 = data.filter((x) => selector(fromHex(x.slice(56)).toString().replace(/\d+/g, ""))
+       == filterOption);
+      console.log(data1)
       const data2 = await Promise.all(
         data1.map(
           async (x) =>
@@ -79,19 +65,14 @@ export default function ListAssets({
       let filteredMetadata_ = data2.filter(
         (x) =>
           x.data.onchain_metadata &&
-          x.data.onchain_metadata &&
-          x.data.onchain_metadata.description &&
-          x.data.onchain_metadata.description.split("-")[0] == filterOption
+          x.data.onchain_metadata //&&
+         // x.data.onchain_metadata.description &&
+         // x.data.onchain_metadata.description.split("-")[0] == filterOption
       );
       let filteredMetadata = filteredMetadata_.map((x) => x.data);
 
       const assets = data2.map((x) => x.data.asset);
-      if (categorie) {
-        filteredMetadata =
-          filteredMetadata.filter(
-            (x) => x.data.onchain_metadata.description.split("-")[1]
-          ) == categorie;
-      }
+      
       setNFTs(filteredMetadata);
 
       setLoadingState("loaded");
@@ -121,7 +102,7 @@ export default function ListAssets({
                     .map((x) => JSON.stringify(x))
                     .includes(
                       JSON.stringify({
-                        metadata: `${nft.onchain_metadata}`,
+                        metadata: `${JSON.stringify(nft.onchain_metadata)}`,
                         quantity: `${nft.quantity}`,
                         unit: `${nft.asset}`,
                       })
@@ -143,21 +124,27 @@ export default function ListAssets({
                 width="300"
                 src={
                   nft.onchain_metadata.image &&
-                  `${infuragateway}${nft.onchain_metadata.image.replace(
+                  `${INFURA}${nft.onchain_metadata.image.replace(
                     "ipfs://",
                     "ipfs/"
                   )}`
                 }
                 onClick={() => {
-                  const asset = {
-                    metadata: `${nft.onchain_metadata}`,
+                  const metadata= JSON.stringify(nft.onchain_metadata)
+                  console.log(metadata)
+                  const asset = {                    
+                    metadata: `${metadata}`,
                     quantity: `${nft.quantity}`,
-                    unit: `${nft.asset}`,
+                    unit: `${nft.asset}`,                    
                   };
+                  
 
                   console.log(selectedAsset);
 
                   console.log(selectedAsset.includes(asset));
+
+                  if(isInventory){  setselectedAsset([asset])}
+                  else{
 
                   if (
                     selectedAsset
@@ -172,7 +159,7 @@ export default function ListAssets({
                   } else {
                     setselectedAsset([asset, ...selectedAsset]);
                   }
-                }}
+                }}}
               />
             }
             <div>

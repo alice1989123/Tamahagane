@@ -16,8 +16,8 @@ import ListAssets from "../components/ListAssets";
 import { useColorModeValue } from "@chakra-ui/color-mode";
 import { MintWeapon, metadataBuilder } from "../cardano/wallet.js";
 import weapons from "../constants/weaponsRecipes.js";
-import SelectMaterialsDropDown from "../components/MaterialsDropdown.js";
-import { burningTokens, forgeWeapon } from "../cardano/apiServerCalls.js";
+import SelectMaterialsDropDown from "../components/MaterialsDropdown.jsx";
+import { forgeWeapon } from "../cardano/apiServerCalls.js";
 import styles from "./CraftMaterials.module.scss";
 import BuyMessageModal from "./craftingPage/BuyMessageModal";
 
@@ -44,6 +44,7 @@ const isRecipeComplete_ = function (selectedRecipe, selectedAsset) {
   return selectedAsset.length === 3 && selectedRecipe;
 };
 export default function CraftMaterials() {
+  const [filter, setFilter] = useState("rawMaterial");
   const [NFTs, setNFTs] = useState([]);
   const [selectedRecipe, setselectedRecipe] = useState(null);
   const [loadingState, setLoadingState] = useState("not-loaded");
@@ -135,12 +136,12 @@ export default function CraftMaterials() {
             <Text fontSize="lg" marginTop={6}>
               Available Materials
             </Text>
-            <SelectMaterialsDropDown />
+            <SelectMaterialsDropDown filter={filter} setFilter={setFilter} />
           </Box>
           <ListAssets
             selectedAsset={selectedAsset}
             setselectedAsset={setselectedAsset}
-            filterOption={"material"}
+            filterOption={filter}
             isRecipeComplete={isRecipeComplete}
           ></ListAssets>
         </GridItem>

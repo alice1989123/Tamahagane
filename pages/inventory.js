@@ -11,41 +11,49 @@ import {
 } from "@chakra-ui/layout";
 import { Select, Input } from "@chakra-ui/react";
 import { useState } from "react";
+import { INFURA } from "../constants/routes";
+import { selector } from "../constants/selector";
+console.log(selector("anvil"));
 
-const SelectMaterialsDropDown = function () {
-  const materials = [
-    { label: "Iron Ingot Bloom", value: "ironIngot" },
-    { label: "WOOTZ-Steel Inglot", value: "wootzInglot" },
-    { label: "TAMAHAGANE-Steel Ingot", value: "tamahaganeInglot" },
-    { label: "Anvil", value: "anvil" },
-    { label: "Hammer", value: "hammer" },
-    { label: "Tongs", value: "tongs" },
-    { label: "Splitter", value: "splitter" },
-    { label: "Sword", value: "sword" },
-    { label: "Axe", value: "axe" },
-    { label: "Spear", value: "spear" },
-    { label: "Dagger", value: "dagger" },
-    { label: "Crusader Sword", value: "crusaderSword" },
-    { label: "Medieval Sword", value: "medievalSword" },
-    { label: "Persian Shamir Sword", value: "persianSword" },
-    { label: "Persian Jambiya Dagger", value: "persianDagger" },
-    { label: "Japanese Katana", value: "japaneseKatana" },
-    { label: "Japanese Wakizashi", value: "japaneseWakizashi" },
-    { label: "Crystal Jade Sword", value: "jadeSword" },
-    { label: "Gemed Snake Sword", value: "snakeSword" },
-  ];
+const weaponsClasses = [
+  { label: "Tools", value: "tool" },
+  { label: "Common weapon", value: "commonWeapon" },
+  { label: "Uncommon weapon", value: "uncommonWeapon" },
+  { label: "Rare weapon", value: "rareWeapon" },
+  { label: "Epic weapon", value: "epicWeapon" },
+  { label: "Legendary weapon", value: "legendaryWeapon" },
+];
+
+const optionsJSON = JSON.stringify(weaponsClasses); // We can factor this in one component with MaterialsDropDown, TO DO!
+
+function SelectMaterialsDropDown({ optionsJSON, filter, setFilter }) {
+  function eventHandler(e) {
+    setFilter(e.target.value);
+    console.log(filter);
+  }
+
+  const options = JSON.parse(optionsJSON);
+
   return (
-    <Select m={[2, 4]} w="80%" placeholder="Select categorie">
-      {Object.keys(materials).map((i) => (
-        <option key={i} value={"materials[i].value"}>
-          {materials[i].label}
+    <Select
+      onChange={(e) => eventHandler(e)}
+      options={options}
+      m={[2, 4]}
+      w="80%"
+      placeholder="Select categorie"
+    >
+      {Object.keys(options).map((i) => (
+        <option key={i} value={`${options[i].value}`}>
+          {options[i].label}
         </option>
       ))}
     </Select>
   );
-};
+}
 export default function Inventory1() {
-  const [selectedAsset, setselectedAsset] = useState(null);
+  const [filter, setFilter] = useState("uncommonWeapon");
+  const [selectedAsset, setselectedAsset] = useState([]);
+  const [selectedWeapon, setSelectedWeaopn] = useState([]);
   const background = useColorModeValue("white", "gray.750");
   const background1 = useColorModeValue("gray.100", "gray.700");
 
@@ -85,11 +93,17 @@ export default function Inventory1() {
             <Text fontSize="lg" marginTop={6}>
               Available Assets
             </Text>
-            <SelectMaterialsDropDown />
+            <SelectMaterialsDropDown
+              optionsJSON={optionsJSON}
+              filter={filter}
+              setFilter={setFilter}
+            />
           </Box>
           <ListAssets
+            selectedAsset={selectedAsset}
             setselectedAsset={setselectedAsset}
-            filterOption={"weapon"}
+            filterOption={filter}
+            isInventory={true}
           ></ListAssets>
         </GridItem>
         <GridItem
@@ -128,8 +142,21 @@ export default function Inventory1() {
             m={2}
             h="40rem"
           >
-            <Center> {selectedAsset && "Selected Asset"} </Center>
-            <img src={selectedAsset} width="100%"></img>
+            {/* <Center>
+              {selectedAsset[0] &&
+                `Selected Asset ${
+                  JSON.parse(selectedAsset[0].metadata).image
+                } `}
+            </Center> */}
+
+            {selectedAsset[0] && (
+              <img
+                src={`${INFURA}${JSON.parse(
+                  selectedAsset[0].metadata
+                ).image.replace("ipfs://", "ipfs/")}`}
+                width="100%"
+              ></img>
+            )}
           </Box>
         </GridItem>
       </Grid>

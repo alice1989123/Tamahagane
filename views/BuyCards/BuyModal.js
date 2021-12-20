@@ -49,7 +49,7 @@ function BuyModal({ buyOption, viewModal, setviewModal }) {
           <ModalBody className={styles.modal} m={2}>
             <h2 className={styles.modal}>
               You are about to buy {buyOption} package. The price of this asset
-              is {buyPrice} ₳.
+              is {buyPrice + 2} ₳.
             </h2>
             <p className={styles.modal}>
               Each card package contains 7 randomly selected raw materials which
@@ -57,26 +57,33 @@ function BuyModal({ buyOption, viewModal, setviewModal }) {
               Cardano Block-Chain.
             </p>
             <br></br>
-            <p className={styles.advice}>
+            {/* <p className={styles.advice}>
               The transaction will be charged with an extra of 2₳, which you
               will get back with your cards. The process usually takes less than
               a minute.
-            </p>
+            </p> */}
           </ModalBody>
           <ModalFooter>
             <Button
               size="lg"
               onClick={async () => {
                 setviewModal(false);
-                const buy = await buyCards(buyOption);
-                console.log(buy);
+                if (window.cardano.enable()) {
+                  try {
+                    const buy = await buyCards(buyOption);
+                    console.log(buy);
 
-                if (buy) {
-                  if (buy[1] === "SUBMITION-ERROR") {
+                    if (buy) {
+                      if (buy[1] === "SUBMITION-ERROR") {
+                        setError(true);
+                      }
+                      if (buy[1] === "TX-HASH") {
+                        setConfirmation(buy[0]);
+                      }
+                    }
+                  } catch (e) {
+                    console.log(e);
                     setError(true);
-                  }
-                  if (buy[1] === "TX-HASH") {
-                    setConfirmation(buy[0]);
                   }
                 }
               }}
