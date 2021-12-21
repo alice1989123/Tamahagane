@@ -73,7 +73,6 @@ const isRecipeComplete_ = function (selectedRecipe, selectedAsset) {
   }
 };
 export default function CraftMaterials() {
-  const [filter, setFilter] = useState("rawMaterial");
   const [NFTs, setNFTs] = useState([]);
   const [selectedRecipe, setselectedRecipe] = useState(null);
   const [loadingState, setLoadingState] = useState("not-loaded");
@@ -82,16 +81,17 @@ export default function CraftMaterials() {
   const background1 = useColorModeValue("gray.100", "gray.700");
   const [isRecipeComplete, setIsRecipeComplete] = useState(false);
   const [confirmation, setConfirmation] = useState(false);
+  const [filter, setFilter] = useState(["rawMaterial"]);
 
-  useEffect(() => {
+  /*   useEffect(() => {
     loadNFTs();
-  }, []);
+  }, []); */
   useEffect(() => {
     setIsRecipeComplete(isRecipeComplete_(selectedRecipe, selectedAsset)),
       [selectedRecipe, selectedAsset];
   });
 
-  async function loadNFTs() {
+  /*   async function loadNFTs() {
     const address = await addressToBech32();
 
     const getAssets = async function () {
@@ -123,7 +123,7 @@ export default function CraftMaterials() {
 
     setNFTs(data2);
     setLoadingState("loaded");
-  }
+  } */
 
   return (
     <Box

@@ -8,7 +8,7 @@ export const materials = [
   },
   { label: "Oakwood", value: "oakwood", class: "rawMaterial" },
   { label: "Leather", value: "leather", class: "rawMaterial" },
-  { label: "Gemstone", value: "gemstone", class: "rawMaterial" },
+  { label: "Gemstone", value: "gemstones", class: "rawMaterial" },
   {
     label: "Silver coin",
     value: "silvercoin",

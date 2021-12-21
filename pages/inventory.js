@@ -51,7 +51,7 @@ function SelectMaterialsDropDown({ optionsJSON, filter, setFilter }) {
   );
 }
 export default function Inventory1() {
-  const [filter, setFilter] = useState("uncommonWeapon");
+  const [filter, setFilter] = useState("tool");
   const [selectedAsset, setselectedAsset] = useState([]);
   const [selectedWeapon, setSelectedWeaopn] = useState([]);
   const background = useColorModeValue("white", "gray.750");
@@ -70,6 +70,8 @@ export default function Inventory1() {
         templateRows={["repeat(6, 1fr)", "1fr"]}
         gap={2}
         m={[1, 2, 4]}
+        display="flex"
+        width={"90%"}
       >
         <GridItem
           display="flex"
@@ -80,6 +82,7 @@ export default function Inventory1() {
           colStart={[1, 1]}
           colEnd={[1, 5]}
           bg={background}
+          w="70%"
         >
           <Box
             display="flex"
@@ -115,6 +118,7 @@ export default function Inventory1() {
           colStart={[1, 5]}
           colEnd={[1, 7]}
           bg={background}
+          w="30%"
         >
           <Box
             display="flex"
@@ -150,12 +154,14 @@ export default function Inventory1() {
             </Center> */}
 
             {selectedAsset[0] && (
-              <img
-                src={`${INFURA}${JSON.parse(
-                  selectedAsset[0].metadata
-                ).image.replace("ipfs://", "ipfs/")}`}
-                width="100%"
-              ></img>
+              <Box>
+                <img
+                  src={`${INFURA}${JSON.parse(
+                    selectedAsset[0].metadata
+                  ).image.replace("ipfs://", "ipfs/")}`}
+                  width="400"
+                ></img>
+              </Box>
             )}
           </Box>
         </GridItem>

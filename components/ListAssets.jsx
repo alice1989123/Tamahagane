@@ -6,11 +6,18 @@ import { GridItem, SimpleGrid } from "@chakra-ui/layout";
 import { useColorModeValue } from "@chakra-ui/color-mode";
 import styles from "./LisAssets.module.scss";
 import { selector } from "../constants/selector";
+const server = process.env.NEXT_PUBLIC_SERVER_API
 
 
 
+function selector_(x,filterOption)  { return (selector(fromHex(x.slice(56)).toString().replace(/\d+/g, ""))
+== filterOption)}
 
+function MaterialSelector (x) {return selector_(x,"rawMaterial") || selector_(x,"materialIngot") || selector_(x,"tool")  }
 
+function WeaponsSelector (x) {return selector_(x,"commonWeapon") || selector_(x,"uncommonWeapon") || selector_(x,"rareWeapon") || selector_(x,"epicWeapon") || selector_(x,"legendaryWeapon") ||  selector_(x,"tool")}
+
+function generalSelector(isInventory){ return isInventory ? WeaponsSelector : MaterialSelector}
 
 export default function ListAssets({
   selectedAsset,
@@ -26,6 +33,7 @@ export default function ListAssets({
     loadNFTs();
   }, [filterOption]);
   console.log(filterOption)
+  
 
   async function loadNFTs() {
     await window.cardano.enable();
@@ -35,7 +43,7 @@ export default function ListAssets({
     const getAssets = async function () {
       // This function trows an error 404 if the address has not had any tx...  FIX!!!
       try {
-        const response = await axios.post("http://localhost:3001/api/assetss", {
+        const response = await axios.post(`${server}/api/assetss`, {
           address: address,
         });
         const assets = response.data.amount.map((x) => x.unit);
@@ -50,14 +58,15 @@ export default function ListAssets({
     if (!data) {
       setLoadingState("loaded");
     } else {
+
+      
       console.log(data.map(x => fromHex(x.slice(56)).toString().replace(/\d+/g, "")))
-      const data1 = data.filter((x) => selector(fromHex(x.slice(56)).toString().replace(/\d+/g, ""))
-       == filterOption);
+      const data1 = (filterOption==[])? data.filter(x => generalSelector(isInventory)(x)) : data.filter((x) =>selector_(x,filterOption));
       console.log(data1)
       const data2 = await Promise.all(
         data1.map(
           async (x) =>
-            await axios.post("http://localhost:3001/api/assetss/info", {
+            await axios.post(`${server}/api/assetss/info`, {
               asset: x,
             })
         )
@@ -82,7 +91,7 @@ export default function ListAssets({
   return (
     <SimpleGrid
       bg={useColorModeValue("gray.100", "gray.700")}
-      columns={2}
+      columns={3}
       spacing={[1, 2, 4]}
       h="40rem"
       w="100%"
@@ -90,9 +99,11 @@ export default function ListAssets({
       m={2}
       p={[1, 2, 4]}
       borderRadius="md"
+     
+
     >
       {loadingState === "loaded" && !NFTs.length ? (
-        <div>No assets Owned</div>
+        <div>{/* No assets Owned */}</div>
       ) : (
         NFTs.map((nft, i) => (
           <GridItem
@@ -116,12 +127,12 @@ export default function ListAssets({
             key={i}
             _hover={{
               background: "gray.500",
-            }}
+            } } h="-webkit-fit-content"
           >
             {
               <img
                 className={styles.image}
-                width="300"
+                width="300"                
                 src={
                   nft.onchain_metadata.image &&
                   `${INFURA}${nft.onchain_metadata.image.replace(
