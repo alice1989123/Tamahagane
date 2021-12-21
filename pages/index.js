@@ -1,6 +1,6 @@
 import Home from "../views/Home/Home";
 const axios = require("axios");
-import { LATEST_BLOCK } from "../constants/API/v0/routes";
+import { LATEST_BLOCK } from "../constants/routes";
 
 export default function HomePage(props) {
   return <Home {...props} />;
@@ -16,7 +16,7 @@ export async function getServerSideProps() {
         },
       };
       const response = await axios.get(LATEST_BLOCK, config);
-      return response.data.latestBlock;
+      return response.data.slot;
     } catch (error) {
       console.error(error);
       return null;

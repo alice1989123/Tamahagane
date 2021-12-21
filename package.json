@@ -4,6 +4,8 @@
   "description": "Jumping off point for viewing the Cardano Nami Wallet within a Nextjs Application. With ChakraUI & Sass",
   "homepage": "https://github.com/MiCurran/Nextjs-NamiWallet-Boilerplate",
   "private": true,
+  "engines" : { "node" : ">=0.14" },
+  "engineStrict" : true ,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -12,16 +14,18 @@
   },
   "dependencies": {
     "@blockfrost/blockfrost-js": "^2.0.1",
-    "@chakra-ui/icons": "^1.0.16",
+    "@chakra-ui/icons": "^1.1.1",
     "@chakra-ui/react": "^1.6.6",
     "@emotion/react": "^11.4.1",
     "@emotion/styled": "^11.3.0",
     "@emurgo/cardano-serialization-lib-asmjs": "^9.1.0",
+    "@emurgo/cardano-serialization-lib-browser": "10.0.0-beta.8",
     "axios": "^0.21.1",
     "easy-peasy": "^5.0.4",
     "framer-motion": "^4.1.17",
     "next": "11.1.0",
     "react": "17.0.2",
+    "react-countdown-circle-timer": "^2.5.4",
     "react-dom": "17.0.2",
     "react-middle-ellipsis": "^1.2.1",
     "sass": "^1.38.0"
