@@ -7,7 +7,7 @@ class Loader {
      * @private
      */
     this._wasm = await import(
-      "../node_modules/@emurgo/cardano-serialization-lib-browser/cardano_serialization_lib_bg"
+      "./@emurgo/cardano-serialization-lib-browser/cardano_serialization_lib_bg"
     );
   }
 

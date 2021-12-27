@@ -1,14 +1,23 @@
 import Loader from "./loader";
+import CustomLoader from "./customLoader.js";
 import {
   LATEST_BLOCK,
   ADDRESSES,
   LATEST_PARAMETERS,
 } from "../constants/routes.js";
 import axios from "axios";
-import CoinSelection from "./coinSelection.js";
+import CoinSelection from "./CoinSelection.js";
+import { Buffer } from "safe-buffer";
+import { getParams } from "./apiServerCalls";
+import { languageViews } from "./Types/LanguageViews";
+import { PlutusDataObject } from "./Types/PlutusDataObject";
+import { PlutusField, PlutusFieldType } from "./Types/PlutusField";
+import { Address } from "./custom_modules/@emurgo/cardano-serialization-lib-browser/cardano_serialization_lib_bg";
+import { Value } from "./@emurgo/cardano-serialization-lib-browser/cardano_serialization_lib_bg";
+import { Contract } from "./marketPlaceContract";
 
 export function toHex(bytes) {
-  return Buffer.from(bytes).toString("hex");
+  return Buffer.from(bytes, "hex").toString("hex");
 }
 export function fromHex(hex) {
   return Buffer.from(hex, "hex");
@@ -192,7 +201,7 @@ export async function addWitnessandSign(txBuilder) {
     )
   );
 
-  const Signature = await window.cardano.signTx(toHex(tx.to_bytes(tx)));
+  const Signature = await window.Cardano.signTx(toHex(tx.to_bytes(tx)));
 
   const txVkeyWitnesses = Loader.Cardano.TransactionWitnessSet.from_bytes(
     fromHex(Signature)
@@ -855,4 +864,671 @@ export async function signTx_(transaction_) {
     transaction.auxiliary_data()
   );
   return signedTx;
+}
+
+export const assetsToValue = (assets) => {
+  const multiAsset = Loader.Cardano.MultiAsset.new();
+  const lovelace = assets.find((asset) => asset.unit === "lovelace");
+  const policies = [
+    ...new Set(
+      assets
+        .filter((asset) => asset.unit !== "lovelace")
+        .map((asset) => asset.unit.slice(0, 56))
+    ),
+  ];
+  policies.forEach((policy) => {
+    const policyAssets = assets.filter(
+      (asset) => asset.unit.slice(0, 56) === policy
+    );
+    const assetsValue = Loader.Cardano.Assets.new();
+    policyAssets.forEach((asset) => {
+      assetsValue.insert(
+        Loader.Cardano.AssetName.new(Buffer.from(asset.unit.slice(56), "hex")),
+        Loader.Cardano.BigNum.from_str(asset.quantity)
+      );
+    });
+    multiAsset.insert(
+      Loader.Cardano.ScriptHash.from_bytes(Buffer.from(policy, "hex")),
+      assetsValue
+    );
+  });
+  const value = Loader.Cardano.Value.new(
+    Loader.Cardano.BigNum.from_str(lovelace ? lovelace.quantity : "0")
+  );
+  if (assets.length > 1 || !lovelace) value.set_multiasset(multiAsset);
+  return value;
+};
+
+export const valueToAssets = (value) => {
+  const assets = [];
+  assets.push({ unit: "lovelace", quantity: value.coin().to_str() });
+  if (value.multiasset()) {
+    const multiAssets = value.multiasset().keys();
+    for (let j = 0; j < multiAssets.len(); j++) {
+      const policy = multiAssets.get(j);
+      const policyAssets = value.multiasset().get(policy);
+      const assetNames = policyAssets.keys();
+      for (let k = 0; k < assetNames.len(); k++) {
+        const policyAsset = assetNames.get(k);
+        const quantity = policyAssets.get(policyAsset);
+        const asset =
+          Buffer.from(policy.to_bytes(), "hex").toString("hex") +
+          Buffer.from(policyAsset.name(), "hex").toString("hex");
+        assets.push({
+          unit: asset,
+          quantity: quantity.to_str(),
+        });
+      }
+    }
+  }
+  return assets;
+};
+
+export async function sell(selectedAsset, askingPrice, metadata) {
+  if (selectedAsset.length == 0) {
+    console.log("you have not selected an asset to sell");
+  } else {
+    await CustomLoader.load();
+    const martketAddressbech32 =
+      "addr_test1wp9cnq967kcf7dtn7fhpqr0cz0wjffse67qc3ww4v3c728c4qjr6j";
+    const marketAddress =
+      CustomLoader.Cardano.Address.from_bech32(martketAddressbech32);
+
+    async function initTx(protocolParameters) {
+      const txBuilder = CustomLoader.Cardano.TransactionBuilder.new(
+        CustomLoader.Cardano.LinearFee.new(
+          CustomLoader.Cardano.BigNum.from_str(
+            protocolParameters.linearFee.minFeeA
+          ),
+          CustomLoader.Cardano.BigNum.from_str(
+            protocolParameters.linearFee.minFeeB
+          )
+        ),
+        CustomLoader.Cardano.BigNum.from_str(protocolParameters.minUtxo),
+        CustomLoader.Cardano.BigNum.from_str(protocolParameters.poolDeposit),
+        CustomLoader.Cardano.BigNum.from_str(protocolParameters.keyDeposit),
+        protocolParameters.maxValSize,
+        protocolParameters.maxTxSize,
+        protocolParameters.priceMem,
+        protocolParameters.priceStep,
+        CustomLoader.Cardano.LanguageViews.new(
+          Buffer.from(languageViews, "hex")
+        )
+      );
+      const datums = CustomLoader.Cardano.PlutusList.new();
+      const outputs = CustomLoader.Cardano.TransactionOutputs.new();
+      return { txBuilder };
+    }
+
+    //console.log(selectedAsset[0]);
+    const hexUtxos = await window.cardano.getUtxos();
+
+    //console.log(hexUtxos);
+
+    const utxos = hexUtxos.map((x) =>
+      CustomLoader.Cardano.TransactionUnspentOutput.from_bytes(
+        Buffer.from(x, "hex")
+      )
+    );
+
+    const protocolParameters = await getParams();
+
+    // console.log(protocolParameters);
+
+    const { txBuilder } = await initTx(protocolParameters);
+
+    const hexAddress = await addressToBech32();
+
+    const clientAddress = CustomLoader.Cardano.Address.from_bech32(hexAddress);
+
+    const baseAddress =
+      CustomLoader.Cardano.BaseAddress.from_address(clientAddress);
+
+    const pkh = toHex(baseAddress.payment_cred().to_keyhash().to_bytes());
+    //console.log(pkh);
+
+    const policyId = selectedAsset[0].unit.slice(0, 56);
+    //console.log(policyId);
+    const assetNameHex = selectedAsset[0].unit.slice(56);
+
+    const assetName = Buffer.from(assetNameHex, "hex").toString("utf8");
+    //console.log(assetName);
+
+    const OfferDatum = (pkh, price, policyId, assetNameHex) => {
+      const offerDatum = new PlutusDataObject(0);
+      offerDatum.Fields = [
+        {
+          Index: 0,
+          Type: PlutusFieldType.Bytes,
+          Key: "pkh",
+          Value: fromHex(pkh),
+        },
+        {
+          Index: 0,
+          Type: PlutusFieldType.Integer,
+          Key: "price",
+          Value: price,
+        },
+        {
+          Index: 0,
+          Type: PlutusFieldType.Bytes,
+          Key: "policyId",
+          Value: fromHex(policyId), // TODO:  Here they were using buffer read from utf8? I changed it since it did not had sense for me!!
+        },
+        {
+          Index: 0,
+          Type: PlutusFieldType.Bytes,
+          Key: "assetName",
+          Value: fromHex(assetNameHex),
+        },
+      ];
+
+      return offerDatum;
+    };
+
+    const ToPlutusData = async (plutusDataObj) => {
+      const datumFields = CustomLoader.Cardano.PlutusList.new();
+      plutusDataObj.Fields.sort((a, b) => a.Index - b.Index);
+      plutusDataObj.Fields.forEach((f) => {
+        switch (f.Type) {
+          case PlutusFieldType.Integer:
+            datumFields.add(
+              CustomLoader.Cardano.PlutusData.new_integer(
+                CustomLoader.Cardano.BigInt.from_str(f.Value.toString())
+              )
+            );
+            break;
+          // case PlutusFieldType.Data:
+          //     datumFields.add(ToPlutusData(f.Value) as PlutusData);
+          case PlutusFieldType.Bytes:
+            datumFields.add(CustomLoader.Cardano.PlutusData.new_bytes(f.Value));
+        }
+      });
+
+      return CustomLoader.Cardano.PlutusData.new_constr_plutus_data(
+        CustomLoader.Cardano.ConstrPlutusData.new(
+          CustomLoader.Cardano.Int.new_i32(plutusDataObj.ConstructorIndex),
+          datumFields
+        )
+      );
+    };
+    CoinSelection.setProtocolParameters(
+      protocolParameters.minUtxo.toString(),
+      protocolParameters.linearFee.minFeeA.toString(),
+      protocolParameters.linearFee.minFeeB.toString(),
+      protocolParameters.maxTxSize.toString()
+    );
+
+    const hoskyDatumObject = OfferDatum(pkh, askingPrice, policyId, assetName);
+
+    //console.log(hoskyDatumObject);
+
+    const datum = await ToPlutusData(hoskyDatumObject);
+
+    //console.log(datum);
+
+    const datumHash = CustomLoader.Cardano.hash_plutus_data(datum);
+
+    //console.log(datumHash);
+
+    /*  console.log(
+      Buffer.from(
+        CustomLoader.Cardano.hash_plutus_data(datum).to_bytes(),
+        "hex"
+      ).toString("hex")
+    ); */
+
+    //console.log(Buffer.from(datum.to_bytes(), "hex").toString("hex"));
+
+    const outPutValue_ = await amountToValue([
+      {
+        unit: selectedAsset[0].unit,
+        quantity: selectedAsset[0].quantity,
+      },
+    ]);
+
+    const outPutValue = CustomLoader.Cardano.Value.from_bytes(
+      //This is needed because amountToValue uses Loader instead of CustomLoader maybe we should just use Custom Loader everywhere instead
+      outPutValue_.to_bytes()
+    );
+
+    const datumHashBytes = datumHash.to_bytes(); //this is required because ptr changes after it is used
+    const min_ada_required = CustomLoader.Cardano.min_ada_required(
+      outPutValue,
+      CustomLoader.Cardano.BigNum.from_str(protocolParameters.minUtxo),
+      datumHash
+    );
+    outPutValue.set_coin(min_ada_required);
+
+    const outPut = CustomLoader.Cardano.TransactionOutput.new(
+      marketAddress,
+      outPutValue
+    );
+
+    outPut.set_data_hash(
+      CustomLoader.Cardano.DataHash.from_bytes(datumHashBytes)
+    );
+
+    const outPuts = CustomLoader.Cardano.TransactionOutputs.new();
+    outPuts.add(outPut);
+    let { input, change } = CoinSelection.randomImprove(utxos, outPuts, 8);
+    input.forEach((utxo) => {
+      txBuilder.add_input(
+        utxo.output().address(),
+        utxo.input(),
+        utxo.output().amount()
+      );
+    });
+
+    txBuilder.add_output(outPut);
+
+    const transactionWitnessSet =
+      CustomLoader.Cardano.TransactionWitnessSet.new();
+
+    if (metadata) {
+      aux_data = CustomLoader.Cardano.AuxiliaryData.new();
+      const generalMetadata =
+        CustomLoader.Cardano.GeneralTransactionMetadata.new();
+      Object.keys(metadata).forEach((label) => {
+        Object.keys(metadata[label]).length > 0 &&
+          generalMetadata.insert(
+            CustomLoader.Cardano.BigNum.from_str(label),
+            CustomLoader.Cardano.encode_json_str_to_metadatum(
+              JSON.stringify(metadata[label]),
+              1
+            )
+          );
+      });
+
+      aux_data.set_metadata(generalMetadata);
+      txBuilder.set_auxiliary_data(aux_data);
+    }
+
+    txBuilder.add_change_if_needed(clientAddress);
+
+    const txBody = txBuilder.build();
+    const tx = CustomLoader.Cardano.Transaction.new(
+      txBody,
+      CustomLoader.Cardano.TransactionWitnessSet.new(),
+      txBody.auxiliary_data
+    );
+    const size = tx.to_bytes().length * 2;
+    console.log(size);
+    if (size > protocolParameters.maxTxSize)
+      throw new Error("MAX_SIZE_REACHED");
+    let txVkeyWitnesses = await window.cardano.signTx(
+      toHex(tx.to_bytes()),
+      true
+    );
+    console.log(toHex(tx.to_bytes()));
+    txVkeyWitnesses = CustomLoader.Cardano.TransactionWitnessSet.from_bytes(
+      fromHex(txVkeyWitnesses)
+    );
+    transactionWitnessSet.set_vkeys(txVkeyWitnesses.vkeys());
+    const signedTx = CustomLoader.Cardano.Transaction.new(
+      tx.body(),
+      transactionWitnessSet,
+      tx.auxiliary_data()
+    );
+
+    console.log("Full Tx Size", signedTx.to_bytes().length);
+
+    const txHash = await window.cardano.submitTx(toHex(signedTx.to_bytes()));
+    console.log("Your item has been listened at sale for a price of ${price}");
+    return txHash;
+  }
+}
+
+export async function CancelSell(metadata) {
+  await CustomLoader.load();
+  const martketAddressbech32 =
+    "addr_test1wp9cnq967kcf7dtn7fhpqr0cz0wjffse67qc3ww4v3c728c4qjr6j";
+  const marketAddress =
+    CustomLoader.Cardano.Address.from_bech32(martketAddressbech32);
+
+  async function initTx(protocolParameters) {
+    const txBuilder = CustomLoader.Cardano.TransactionBuilder.new(
+      CustomLoader.Cardano.LinearFee.new(
+        CustomLoader.Cardano.BigNum.from_str(
+          protocolParameters.linearFee.minFeeA
+        ),
+        CustomLoader.Cardano.BigNum.from_str(
+          protocolParameters.linearFee.minFeeB
+        )
+      ),
+      CustomLoader.Cardano.BigNum.from_str(protocolParameters.minUtxo),
+      CustomLoader.Cardano.BigNum.from_str(protocolParameters.poolDeposit),
+      CustomLoader.Cardano.BigNum.from_str(protocolParameters.keyDeposit),
+      protocolParameters.maxValSize,
+      protocolParameters.maxTxSize,
+      protocolParameters.priceMem,
+      protocolParameters.priceStep,
+      CustomLoader.Cardano.LanguageViews.new(Buffer.from(languageViews, "hex"))
+    );
+
+    return { txBuilder };
+  }
+
+  const txId =
+    "640ea2317f97b7735b24d86fce3f6f1a257a6e876fd5cd697221ca3d2369dd05";
+  const txIndex = "0";
+
+  const askingPrice = "5000000";
+
+  const inputDAtaHash =
+    "be01a7c9cd7b5982ea98022cac268913311a5a98ad6a37b3d67f1bf918b7b8e8";
+  const protocolParameters = await getParams();
+
+  // console.log(protocolParameters);
+
+  const { txBuilder } = await initTx(protocolParameters);
+
+  const hexAddress = await addressToBech32();
+
+  const clientAddress = CustomLoader.Cardano.Address.from_bech32(hexAddress);
+
+  const baseAddress =
+    CustomLoader.Cardano.BaseAddress.from_address(clientAddress);
+
+  const pkh = toHex(baseAddress.payment_cred().to_keyhash().to_bytes());
+  //console.log(pkh);
+
+  const assetName = "charcoal18";
+  const assetNameHex = asciiToHex(assetName);
+
+  const policyId = "e93ec6209631511713b832e5378f77b587762bc272893a7163ecc46e";
+
+  const unit = policyId + assetNameHex;
+  console.log(unit);
+
+  const nfTValue = await assetsToValue_([{ unit: unit, quantity: "1" }]);
+
+  nfTValue.set_coin(CustomLoader.Cardano.BigNum.from_str("1851850"));
+  //console.log(  nfTValue);
+
+  const nfTValueBytes = nfTValue.to_bytes();
+
+  const min_ada_required = CustomLoader.Cardano.min_ada_required(
+    CustomLoader.Cardano.Value.from_bytes(nfTValueBytes),
+    CustomLoader.Cardano.BigNum.from_str(protocolParameters.minUtxo),
+    CustomLoader.Cardano.DataHash.from_bytes(Buffer.from(inputDAtaHash, "hex"))
+  );
+  //console.log(nfTValueBytes);
+
+  const scriptUtxo = CustomLoader.Cardano.TransactionUnspentOutput.new(
+    CustomLoader.Cardano.TransactionInput.new(
+      CustomLoader.Cardano.TransactionHash.from_bytes(fromHex(txId)),
+      txIndex
+    ),
+    CustomLoader.Cardano.TransactionOutput.new(marketAddress, nfTValue)
+  );
+  const utxos = (await window.cardano.getUtxos()).map((utxo) =>
+    CustomLoader.Cardano.TransactionUnspentOutput.from_bytes(fromHex(utxo))
+  );
+
+  const outPut = CustomLoader.Cardano.TransactionOutput.new(
+    clientAddress,
+    CustomLoader.Cardano.Value.from_bytes(nfTValueBytes).checked_add(
+      CustomLoader.Cardano.Value.new(min_ada_required)
+    )
+  );
+
+  const OfferDatum = (pkh, askingPrice, policyId, assetNameHex) => {
+    // We are using 2 times the same definitions  TODO:  !
+    const offerDatum = new PlutusDataObject(0);
+    offerDatum.Fields = [
+      {
+        Index: 0,
+        Type: PlutusFieldType.Bytes,
+        Key: "pkh",
+        Value: fromHex(pkh),
+      },
+      {
+        Index: 0,
+        Type: PlutusFieldType.Integer,
+        Key: "price",
+        Value: askingPrice,
+      },
+      {
+        Index: 0,
+        Type: PlutusFieldType.Bytes,
+        Key: "policyId",
+        Value: fromHex(policyId), // TODO:  Here they were using buffer read from utf8? I changed it since it did not had sense for me!!
+      },
+      {
+        Index: 0,
+        Type: PlutusFieldType.Bytes,
+        Key: "assetName",
+        Value: assetNameHex(assetNameHex),
+      },
+    ];
+
+    return offerDatum;
+  };
+
+  const ToPlutusData = async (plutusDataObj) => {
+    const datumFields = CustomLoader.Cardano.PlutusList.new();
+    plutusDataObj.Fields.sort((a, b) => a.Index - b.Index);
+    plutusDataObj.Fields.forEach((f) => {
+      switch (f.Type) {
+        case PlutusFieldType.Integer:
+          datumFields.add(
+            CustomLoader.Cardano.PlutusData.new_integer(
+              CustomLoader.Cardano.BigInt.from_str(f.Value.toString())
+            )
+          );
+          break;
+        // case PlutusFieldType.Data:
+        //     datumFields.add(ToPlutusData(f.Value) as PlutusData);
+        case PlutusFieldType.Bytes:
+          datumFields.add(CustomLoader.Cardano.PlutusData.new_bytes(f.Value));
+      }
+    });
+
+    return CustomLoader.Cardano.PlutusData.new_constr_plutus_data(
+      CustomLoader.Cardano.ConstrPlutusData.new(
+        CustomLoader.Cardano.Int.new_i32(plutusDataObj.ConstructorIndex),
+        datumFields
+      )
+    );
+  };
+
+  const hoskyDatumObject = OfferDatum(pkh, askingPrice, policyId, assetName);
+
+  //console.log(hoskyDatumObject);
+
+  const datum = await ToPlutusData(hoskyDatumObject);
+
+  //console.log(datum);
+
+  const datumHash = CustomLoader.Cardano.hash_plutus_data(datum);
+
+  console.log(datumHash);
+
+  console.log(Buffer.from(datum.to_bytes(), "hex").toString("hex"));
+
+  const datumList = CustomLoader.Cardano.PlutusList.new();
+  datumList.add(datum);
+  const outPuts = CustomLoader.Cardano.TransactionOutputs.new();
+  outPuts.add(outPut);
+  let { input, change, remaining } = CoinSelection.randomImprove(
+    utxos,
+    outPuts,
+    8,
+    [scriptUtxo]
+  );
+
+  CoinSelection.setProtocolParameters(
+    protocolParameters.minUtxo.toString(),
+    protocolParameters.linearFee.minFeeA.toString(),
+    protocolParameters.linearFee.minFeeB.toString(),
+    protocolParameters.maxTxSize.toString()
+  );
+
+  input.forEach((utxo) => {
+    txBuilder.add_input(
+      utxo.output().address(),
+      utxo.input(),
+      utxo.output().amount()
+    );
+  });
+
+  txBuilder.add_output(outPut);
+
+  const redeemers = CustomLoader.Cardano.Redeemers.new();
+  // not passing datum because close.json content is {"constructor":2,"fields":[]}
+
+  const SimpleRedeemer = async (index) => {
+    //close.json - {"constructor":2,"fields":[]} - this is why I pyt new_i32(2), maybe I'm wrong here
+    const redeemerData = CustomLoader.Cardano.PlutusData.new_constr_plutus_data(
+      CustomLoader.Cardano.ConstrPlutusData.new(
+        CustomLoader.Cardano.Int.new_i32(2),
+        CustomLoader.Cardano.PlutusList.new()
+      )
+    );
+
+    const r = CustomLoader.Cardano.Redeemer.new(
+      CustomLoader.Cardano.RedeemerTag.new_spend(),
+      await CustomLoader.Cardano.BigNum.from_str(index),
+      redeemerData,
+      CustomLoader.Cardano.ExUnits.new(
+        CustomLoader.Cardano.BigNum.from_str("1754991"),
+        CustomLoader.Cardano.BigNum.from_str("652356532")
+      )
+    );
+
+    return r;
+  };
+  redeemers.add(await SimpleRedeemer(txIndex));
+
+  const scripts = CustomLoader.Cardano.PlutusScripts.new();
+  scripts.add(CustomLoader.Cardano.PlutusScript.new(fromHex(Contract.cborHex)));
+
+  const transactionWitnessSet =
+    CustomLoader.Cardano.TransactionWitnessSet.new();
+
+  /*   if (typeof metadata !== undefined) {
+    aux_data = CustomLoader.Cardano.AuxiliaryData.new();
+    const generalMetadata =
+      CustomLoader.Cardano.GeneralTransactionMetadata.new();
+    Object.keys(metadata).forEach((label) => {
+      Object.keys(metadata[label]).length > 0 &&
+        generalMetadata.insert(
+          CustomLoader.Cardano.BigNum.from_str(label),
+          CustomLoader.Cardano.encode_json_str_to_metadatum(
+            JSON.stringify(metadata[label]),
+            1
+          )
+        );
+    });
+
+    aux_data.set_metadata(generalMetadata);
+    txBuilder.set_auxiliary_data(aux_data);
+  } */
+
+  txBuilder.set_plutus_scripts(scripts);
+  console.log(scripts);
+  txBuilder.set_plutus_data(datumList);
+  console.log(datumList);
+
+  txBuilder.set_redeemers(redeemers);
+  console.log(redeemers);
+
+  transactionWitnessSet.set_plutus_scripts(scripts);
+  console.log(scripts);
+
+  transactionWitnessSet.set_plutus_data(datumList);
+  console.log(datumList);
+
+  transactionWitnessSet.set_redeemers(redeemers);
+  console.log(redeemers);
+
+  // console.log(utxos, input, change, remaining);
+
+  const collateralHex = await window.cardano.getCollateral();
+
+  if (collateralHex.length === 0) {
+    console.log("there is not collaterals for this transaction");
+    return;
+  }
+
+  const collateral = CustomLoader.Cardano.TransactionUnspentOutput.from_bytes(
+    Buffer.from(collateralHex[0], "Hex")
+  );
+
+  const collaterals = CustomLoader.Cardano.TransactionInputs.new();
+
+  console.log(collateral.input());
+  collaterals.add(collateral.input());
+
+  const requiredSigners = CustomLoader.Cardano.Ed25519KeyHashes.new();
+  requiredSigners.add(baseAddress.payment_cred().to_keyhash());
+  txBuilder.set_required_signers(requiredSigners);
+  txBuilder.set_collateral(collaterals);
+  txBuilder.add_change_if_needed(clientAddress);
+
+  const txBody = txBuilder.build();
+  const tx = CustomLoader.Cardano.Transaction.new(
+    txBody,
+    transactionWitnessSet,
+    txBody.auxiliary_data
+  );
+  const size = tx.to_bytes().length * 2;
+  console.log(size);
+  if (size > protocolParameters.maxTxSize) throw new Error("MAX_SIZE_REACHED");
+  console.log(toHex(tx.to_bytes()));
+
+  let txVkeyWitnesses = await window.cardano.signTx(toHex(tx.to_bytes()), true);
+  txVkeyWitnesses = CustomLoader.Cardano.TransactionWitnessSet.from_bytes(
+    fromHex(txVkeyWitnesses)
+  );
+  transactionWitnessSet.set_vkeys(txVkeyWitnesses.vkeys());
+  const signedTx = CustomLoader.Cardano.Transaction.new(
+    tx.body(),
+    transactionWitnessSet,
+    tx.auxiliary_data()
+  );
+
+  console.log("Full Tx Size", signedTx.to_bytes().length);
+
+  const txHash = await window.cardano.submitTx(toHex(signedTx.to_bytes()));
+  console.log(
+    `Your item has been listened at sale for a price of ${askingPrice}`
+  );
+  return txHash;
+}
+export async function assetsToValue_(assets) {
+  await CustomLoader.load();
+  const multiAsset = CustomLoader.Cardano.MultiAsset.new();
+  const lovelace = assets.find((asset) => asset.unit === "lovelace");
+  const policies = [
+    ...new Set(
+      assets
+        .filter((asset) => asset.unit !== "lovelace")
+        .map((asset) => asset.unit.slice(0, 56))
+    ),
+  ];
+  policies.forEach((policy) => {
+    const policyAssets = assets.filter(
+      (asset) => asset.unit.slice(0, 56) === policy
+    );
+    const assetsValue = CustomLoader.Cardano.Assets.new();
+    policyAssets.forEach((asset) => {
+      assetsValue.insert(
+        CustomLoader.Cardano.AssetName.new(
+          Buffer.from(asset.unit.slice(56), "hex")
+        ),
+        CustomLoader.Cardano.BigNum.from_str(asset.quantity)
+      );
+    });
+    multiAsset.insert(
+      CustomLoader.Cardano.ScriptHash.from_bytes(Buffer.from(policy, "hex")),
+      assetsValue
+    );
+  });
+  const value = CustomLoader.Cardano.Value.new(
+    CustomLoader.Cardano.BigNum.from_str(lovelace ? lovelace.quantity : "0")
+  );
+  if (assets.length > 1 || !lovelace) value.set_multiasset(multiAsset);
+  return value;
 }

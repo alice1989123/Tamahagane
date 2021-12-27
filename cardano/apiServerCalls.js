@@ -8,6 +8,7 @@ const apiEndPoints = {
   burningTokens: "",
   buyCards: "/api/buy_cards",
   forgeWeapon: "/api/forge-weapon",
+  parameters: "/api/blockfrost/params",
 };
 
 export async function burningTokens() {
@@ -77,4 +78,11 @@ export async function forgeWeapon(tokensToBurn, nFTtoForge) {
 
   console.log(`transaction submited with txHash ${txHash}`);
   return txHash;
+}
+
+export async function getParams() {
+  const params = await axios.get(`${serverApi}${apiEndPoints.parameters}`);
+  //console.log(params);
+
+  return params.data;
 }
