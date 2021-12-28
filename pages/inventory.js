@@ -13,7 +13,6 @@ import { Select, Input } from "@chakra-ui/react";
 import { useState } from "react";
 import { INFURA } from "../constants/routes";
 import { selector } from "../constants/selector";
-console.log(selector("anvil"));
 
 const weaponsClasses = [
   { label: "Tools", value: "tool" },

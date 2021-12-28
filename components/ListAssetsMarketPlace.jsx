@@ -7,7 +7,6 @@ import { useColorModeValue } from "@chakra-ui/color-mode";
 import styles from "./LisAssets.module.scss";
 import { selector } from "../constants/selector";
 const server = process.env.NEXT_PUBLIC_SERVER_API
-//console.log(server)
 
 
 function selector_(x,filterOption)  { return (selector(fromHex(x.slice(56)).toString().replace(/\d+/g, ""))

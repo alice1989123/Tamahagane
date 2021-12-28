@@ -984,74 +984,19 @@ export async function sell(selectedAsset, askingPrice, metadata) {
     const baseAddress =
       CustomLoader.Cardano.BaseAddress.from_address(clientAddress);
 
-    const pkh = toHex(baseAddress.payment_cred().to_keyhash().to_bytes());
+    const pkh = baseAddress.payment_cred().to_keyhash().to_bytes();
     //console.log(pkh);
+    console.log(Buffer.from(pkh, "hex").toString("hex"));
 
     const policyId = selectedAsset[0].unit.slice(0, 56);
     //console.log(policyId);
     const assetNameHex = selectedAsset[0].unit.slice(56);
 
+    console.log(assetNameHex);
+
     const assetName = Buffer.from(assetNameHex, "hex").toString("utf8");
-    //console.log(assetName);
+    console.log(assetName, Buffer.from(fromHex(assetNameHex), "hex"));
 
-    const OfferDatum = (pkh, price, policyId, assetNameHex) => {
-      const offerDatum = new PlutusDataObject(0);
-      offerDatum.Fields = [
-        {
-          Index: 0,
-          Type: PlutusFieldType.Bytes,
-          Key: "pkh",
-          Value: fromHex(pkh),
-        },
-        {
-          Index: 0,
-          Type: PlutusFieldType.Integer,
-          Key: "price",
-          Value: price,
-        },
-        {
-          Index: 0,
-          Type: PlutusFieldType.Bytes,
-          Key: "policyId",
-          Value: fromHex(policyId), // TODO:  Here they were using buffer read from utf8? I changed it since it did not had sense for me!!
-        },
-        {
-          Index: 0,
-          Type: PlutusFieldType.Bytes,
-          Key: "assetName",
-          Value: fromHex(assetNameHex),
-        },
-      ];
-
-      return offerDatum;
-    };
-
-    const ToPlutusData = async (plutusDataObj) => {
-      const datumFields = CustomLoader.Cardano.PlutusList.new();
-      plutusDataObj.Fields.sort((a, b) => a.Index - b.Index);
-      plutusDataObj.Fields.forEach((f) => {
-        switch (f.Type) {
-          case PlutusFieldType.Integer:
-            datumFields.add(
-              CustomLoader.Cardano.PlutusData.new_integer(
-                CustomLoader.Cardano.BigInt.from_str(f.Value.toString())
-              )
-            );
-            break;
-          // case PlutusFieldType.Data:
-          //     datumFields.add(ToPlutusData(f.Value) as PlutusData);
-          case PlutusFieldType.Bytes:
-            datumFields.add(CustomLoader.Cardano.PlutusData.new_bytes(f.Value));
-        }
-      });
-
-      return CustomLoader.Cardano.PlutusData.new_constr_plutus_data(
-        CustomLoader.Cardano.ConstrPlutusData.new(
-          CustomLoader.Cardano.Int.new_i32(plutusDataObj.ConstructorIndex),
-          datumFields
-        )
-      );
-    };
     CoinSelection.setProtocolParameters(
       protocolParameters.minUtxo.toString(),
       protocolParameters.linearFee.minFeeA.toString(),
@@ -1065,11 +1010,13 @@ export async function sell(selectedAsset, askingPrice, metadata) {
 
     const datum = await ToPlutusData(hoskyDatumObject);
 
-    //console.log(datum);
+    console.log(Buffer.from(datum.to_bytes(), "hex").toString("hex"));
+
+    //    console.log(datum);
 
     const datumHash = CustomLoader.Cardano.hash_plutus_data(datum);
 
-    //console.log(datumHash);
+    console.log(Buffer.from(datumHash.to_bytes(), "hex").toString("hex"));
 
     /*  console.log(
       Buffer.from(
@@ -1078,7 +1025,7 @@ export async function sell(selectedAsset, askingPrice, metadata) {
       ).toString("hex")
     ); */
 
-    //console.log(Buffer.from(datum.to_bytes(), "hex").toString("hex"));
+    console.log(Buffer.from(datum.to_bytes(), "hex").toString("hex"));
 
     const outPutValue_ = await amountToValue([
       {
@@ -1210,12 +1157,12 @@ export async function CancelSell(metadata) {
   }
 
   const txId =
-    "640ea2317f97b7735b24d86fce3f6f1a257a6e876fd5cd697221ca3d2369dd05";
+    "07fc55a84dd98a51f11967e45cee479065b148ad30802d4313b10dfe06ff851f";
   const txIndex = "0";
 
   const askingPrice = "5000000";
 
-  const inputDAtaHash =
+  const dummy_inputDAtaHash = // TODO: Check about it! Is it nedeed?
     "be01a7c9cd7b5982ea98022cac268913311a5a98ad6a37b3d67f1bf918b7b8e8";
   const protocolParameters = await getParams();
 
@@ -1230,10 +1177,9 @@ export async function CancelSell(metadata) {
   const baseAddress =
     CustomLoader.Cardano.BaseAddress.from_address(clientAddress);
 
-  const pkh = toHex(baseAddress.payment_cred().to_keyhash().to_bytes());
-  //console.log(pkh);
-
-  const assetName = "charcoal18";
+  const pkh = baseAddress.payment_cred().to_keyhash().to_bytes();
+  console.log(Buffer.from(pkh, "hex").toString("hex"));
+  const assetName = "oakwood21";
   const assetNameHex = asciiToHex(assetName);
 
   const policyId = "e93ec6209631511713b832e5378f77b587762bc272893a7163ecc46e";
@@ -1251,7 +1197,9 @@ export async function CancelSell(metadata) {
   const min_ada_required = CustomLoader.Cardano.min_ada_required(
     CustomLoader.Cardano.Value.from_bytes(nfTValueBytes),
     CustomLoader.Cardano.BigNum.from_str(protocolParameters.minUtxo),
-    CustomLoader.Cardano.DataHash.from_bytes(Buffer.from(inputDAtaHash, "hex"))
+    CustomLoader.Cardano.DataHash.from_bytes(
+      Buffer.from(dummy_inputDAtaHash, "hex")
+    )
   );
   //console.log(nfTValueBytes);
 
@@ -1273,73 +1221,13 @@ export async function CancelSell(metadata) {
     )
   );
 
-  const OfferDatum = (pkh, askingPrice, policyId, assetNameHex) => {
-    // We are using 2 times the same definitions  TODO:  !
-    const offerDatum = new PlutusDataObject(0);
-    offerDatum.Fields = [
-      {
-        Index: 0,
-        Type: PlutusFieldType.Bytes,
-        Key: "pkh",
-        Value: fromHex(pkh),
-      },
-      {
-        Index: 0,
-        Type: PlutusFieldType.Integer,
-        Key: "price",
-        Value: askingPrice,
-      },
-      {
-        Index: 0,
-        Type: PlutusFieldType.Bytes,
-        Key: "policyId",
-        Value: fromHex(policyId), // TODO:  Here they were using buffer read from utf8? I changed it since it did not had sense for me!!
-      },
-      {
-        Index: 0,
-        Type: PlutusFieldType.Bytes,
-        Key: "assetName",
-        Value: assetNameHex(assetNameHex),
-      },
-    ];
-
-    return offerDatum;
-  };
-
-  const ToPlutusData = async (plutusDataObj) => {
-    const datumFields = CustomLoader.Cardano.PlutusList.new();
-    plutusDataObj.Fields.sort((a, b) => a.Index - b.Index);
-    plutusDataObj.Fields.forEach((f) => {
-      switch (f.Type) {
-        case PlutusFieldType.Integer:
-          datumFields.add(
-            CustomLoader.Cardano.PlutusData.new_integer(
-              CustomLoader.Cardano.BigInt.from_str(f.Value.toString())
-            )
-          );
-          break;
-        // case PlutusFieldType.Data:
-        //     datumFields.add(ToPlutusData(f.Value) as PlutusData);
-        case PlutusFieldType.Bytes:
-          datumFields.add(CustomLoader.Cardano.PlutusData.new_bytes(f.Value));
-      }
-    });
-
-    return CustomLoader.Cardano.PlutusData.new_constr_plutus_data(
-      CustomLoader.Cardano.ConstrPlutusData.new(
-        CustomLoader.Cardano.Int.new_i32(plutusDataObj.ConstructorIndex),
-        datumFields
-      )
-    );
-  };
-
   const hoskyDatumObject = OfferDatum(pkh, askingPrice, policyId, assetName);
 
   //console.log(hoskyDatumObject);
 
   const datum = await ToPlutusData(hoskyDatumObject);
 
-  //console.log(datum);
+  console.log(Buffer.from(datum.to_bytes(), "hex").toString("hex"));
 
   const datumHash = CustomLoader.Cardano.hash_plutus_data(datum);
 
@@ -1351,18 +1239,19 @@ export async function CancelSell(metadata) {
   datumList.add(datum);
   const outPuts = CustomLoader.Cardano.TransactionOutputs.new();
   outPuts.add(outPut);
-  let { input, change, remaining } = CoinSelection.randomImprove(
-    utxos,
-    outPuts,
-    8,
-    [scriptUtxo]
-  );
 
   CoinSelection.setProtocolParameters(
     protocolParameters.minUtxo.toString(),
     protocolParameters.linearFee.minFeeA.toString(),
     protocolParameters.linearFee.minFeeB.toString(),
     protocolParameters.maxTxSize.toString()
+  );
+
+  let { input, change, remaining } = CoinSelection.randomImprove(
+    utxos,
+    outPuts,
+    8,
+    [scriptUtxo]
   );
 
   input.forEach((utxo) => {
@@ -1392,8 +1281,8 @@ export async function CancelSell(metadata) {
       await CustomLoader.Cardano.BigNum.from_str(index),
       redeemerData,
       CustomLoader.Cardano.ExUnits.new(
-        CustomLoader.Cardano.BigNum.from_str("1754991"),
-        CustomLoader.Cardano.BigNum.from_str("652356532")
+        CustomLoader.Cardano.BigNum.from_str("7000000"),
+        CustomLoader.Cardano.BigNum.from_str("3000000000")
       )
     );
 
@@ -1532,3 +1421,62 @@ export async function assetsToValue_(assets) {
   if (assets.length > 1 || !lovelace) value.set_multiasset(multiAsset);
   return value;
 }
+
+const OfferDatum = (pkh, askingPrice, policyId, assetName) => {
+  const offerDatum = new PlutusDataObject(0);
+  offerDatum.Fields = [
+    {
+      Index: 0,
+      Type: PlutusFieldType.Bytes,
+      Key: "pkh",
+      Value: pkh,
+    },
+    {
+      Index: 0,
+      Type: PlutusFieldType.Integer,
+      Key: "price",
+      Value: askingPrice,
+    },
+    {
+      Index: 0,
+      Type: PlutusFieldType.Bytes,
+      Key: "policyId",
+      Value: fromHex(policyId),
+    },
+    {
+      Index: 0,
+      Type: PlutusFieldType.Bytes,
+      Key: "assetName",
+      Value: Buffer.from(assetName, "utf8"),
+    },
+  ];
+  return offerDatum;
+};
+
+const ToPlutusData = async (plutusDataObj) => {
+  await CustomLoader.load();
+  const datumFields = CustomLoader.Cardano.PlutusList.new();
+  plutusDataObj.Fields.sort((a, b) => a.Index - b.Index);
+  plutusDataObj.Fields.forEach((f) => {
+    switch (f.Type) {
+      case PlutusFieldType.Integer:
+        datumFields.add(
+          CustomLoader.Cardano.PlutusData.new_integer(
+            CustomLoader.Cardano.BigInt.from_str(f.Value.toString())
+          )
+        );
+        break;
+      // case PlutusFieldType.Data:
+      //     datumFields.add(ToPlutusData(f.Value) as PlutusData);
+      case PlutusFieldType.Bytes:
+        datumFields.add(CustomLoader.Cardano.PlutusData.new_bytes(f.Value));
+    }
+  });
+
+  return CustomLoader.Cardano.PlutusData.new_constr_plutus_data(
+    CustomLoader.Cardano.ConstrPlutusData.new(
+      CustomLoader.Cardano.Int.new_i32(plutusDataObj.ConstructorIndex),
+      datumFields
+    )
+  );
+};
