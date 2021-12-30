@@ -1,4 +1,4 @@
-import { addressToBech32 , toHex, fromHex } from "../cardano/wallet.js";
+import { addressBech32, toHex, fromHex } from "../cardano/wallet.js";
 import axios from "axios";
 import {   INFURA } from "../constants/routes";
 import { useState, useEffect } from "react";
@@ -6,6 +6,7 @@ import { GridItem, SimpleGrid } from "@chakra-ui/layout";
 import { useColorModeValue } from "@chakra-ui/color-mode";
 import styles from "./LisAssets.module.scss";
 import { selector } from "../constants/selector";
+import { getAssets , martketData} from "../cardano/apiServerCalls.js";
 const server = process.env.NEXT_PUBLIC_SERVER_API
 
 
@@ -23,37 +24,28 @@ export default function ListAssets({
   setselectedAsset,
   filterOption,
   isInventory,
-  isRecipeComplete,
+  isMarket, 
+   
 }) {
 
   const [NFTs, setNFTs] = useState([]);
   const [loadingState, setLoadingState] = useState("not-loaded");
+  const marketAddress =
+    "addr_test1wp9cnq967kcf7dtn7fhpqr0cz0wjffse67qc3ww4v3c728c4qjr6j";
   useEffect(() => {
     loadNFTs();
   }, [filterOption]);
-  console.log(filterOption)
-  
+  async function loadNFTs( ) {
 
-  async function loadNFTs() {
-    await window.cardano.enable();
+   await window.cardano.enable()
+   const selfAddress = await addressBech32()
+   const  address = isMarket ? marketAddress :  selfAddress
+   const marketNFTs = await martketData();
+   console.log(marketNFTs , isMarket )
+    const data= isMarket ?  marketNFTs.map(x => x.unit) : await getAssets(selfAddress)
 
-    const address = await addressToBech32();
-
-    const getAssets = async function () {
-      // This function trows an error 404 if the address has not had any tx...  FIX!!!
-      try {
-        const response = await axios.post(`${server}/api/assetss`, {
-          address: address,
-        });
-        const assets = response.data.amount.map((x) => x.unit);
-
-        return assets;
-      } catch (error) {
-        console.log(error.response);
-        return null;
-      }
-    };
-    const data = await getAssets();
+    console.log(data)
+    
     if (!data) {
       setLoadingState("loaded");
     } else {
@@ -106,7 +98,7 @@ export default function ListAssets({
       ) : (
         NFTs.map((nft, i) => (
           <GridItem
-            className={styles.card
+            className={selectedAsset?.unit == nft.asset ? styles.selectedCard : styles.card
             }
             key={i}
             _hover={{
@@ -136,25 +128,8 @@ export default function ListAssets({
 
                   console.log(selectedAsset);
 
-                  console.log(selectedAsset.includes(asset));
 
-                  if(isInventory){  setselectedAsset([asset])}
-                  else{
-
-                  if (
-                    selectedAsset
-                      .map((x) => JSON.stringify(x))
-                      .includes(JSON.stringify(asset))
-                  ) {
-                    setselectedAsset(
-                      selectedAsset.filter(
-                        (x) => !(JSON.stringify(x) === JSON.stringify(asset))
-                      )
-                    );
-                  } else {
-                    setselectedAsset([asset, ...selectedAsset]);
-                  }
-                }}}
+                 setselectedAsset(asset)}}
               />
             }
             <div>

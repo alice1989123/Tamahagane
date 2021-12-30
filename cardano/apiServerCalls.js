@@ -4,13 +4,6 @@ import { sendLovelacestoAddres } from "./wallet";
 
 const serverApi = process.env.NEXT_PUBLIC_SERVER_API;
 
-const apiEndPoints = {
-  burningTokens: "",
-  buyCards: "/api/buy_cards",
-  forgeWeapon: "/api/forge-weapon",
-  parameters: "/api/blockfrost/params",
-};
-
 export async function burningTokens() {
   const address = await addressToBech32();
   const response = await axios.post(
@@ -86,3 +79,76 @@ export async function getParams() {
 
   return params.data;
 }
+
+export async function getAssets(address) {
+  // This function trows an error 404 if the address has not had any tx...  FIX!!!
+  try {
+    const response = await axios.post(`${serverApi}${apiEndPoints.assets}`, {
+      address: address,
+    });
+    const assets = response.data.amount.map((x) => x.unit);
+
+    return assets;
+  } catch (error) {
+    console.log(error);
+    return null;
+  }
+}
+
+export async function registerSell(txHash, price, address) {
+  try {
+    const response = await axios.post(
+      `${serverApi}${apiEndPoints.registerSell}`,
+      {
+        txHash: txHash,
+        price: price,
+        address: address,
+      }
+    );
+    const status = response.data;
+
+    return status;
+  } catch (error) {
+    console.log(error);
+    return null;
+  }
+}
+
+export async function martketData() {
+  try {
+    const response = await axios.get(`${serverApi}${apiEndPoints.filter}`);
+    const data = response.data;
+    console.log(data);
+    return data;
+  } catch (error) {
+    console.log(error);
+    return null;
+  }
+}
+
+export async function getUtxos(address) {
+  try {
+    console.log(`${serverApi}${apiEndPoints.getUtxos}`);
+    const response = await axios.post(`${serverApi}${apiEndPoints.getUtxos}`, {
+      address: address,
+    });
+    const data = response.data;
+
+    return data;
+    //console.log(data);
+  } catch (error) {
+    console.log(error);
+    return null;
+  }
+}
+
+const apiEndPoints = {
+  burningTokens: "",
+  buyCards: "/api/buy_cards",
+  forgeWeapon: "/api/forge-weapon",
+  parameters: "/api/blockfrost/params",
+  assets: "/api/assetss",
+  registerSell: "/api/register_sell",
+  filter: "/api/filter",
+  getUtxos: "/api/utxos",
+};

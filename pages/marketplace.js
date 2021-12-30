@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Text, Box, Grid, GridItem, SimpleGrid } from "@chakra-ui/layout";
 import { Button } from "@chakra-ui/react";
 import Image from "next/image";
@@ -8,14 +8,26 @@ import SaleForm from "../components/SaleForm.jsx";
 import weaponsURLs from "../constants/weaponsURLs.js";
 import SelectMaterialsDropDown from "../components/MaterialsDropdown.jsx";
 import styles from "./CraftMaterials.module.scss";
-import { CancelSell, sell } from "../cardano/wallet";
+import { CancelSell, sell, addressBech32 } from "../cardano/wallet";
+import { registerSell } from "../cardano/apiServerCalls";
+import { BuyMessageModal } from "../components/BuyMessageModal.jsx";
 
-export default function MarketPlace() {
-  const [selectedAsset, setselectedAsset] = useState([]);
+export default function MarketPlace({ ...props }) {
+  //const { address } = props;
+
+  const [toSell, setToSell] = useState(null);
   const background = useColorModeValue("white", "gray.750");
   const background1 = useColorModeValue("gray.100", "gray.700");
   const [confirmation, setConfirmation] = useState(false);
   const [filter, setFilter] = useState(["rawMaterial"]);
+  const [toBuy, setToBuy] = useState(null);
+  const [address, setaddress] = useState(undefined);
+
+  useEffect(async function getAddress() {
+    const cardano = await window.cardano.enable();
+    const address = await addressBech32();
+    setaddress(address);
+  }, []);
 
   return (
     <Box
@@ -55,15 +67,56 @@ export default function MarketPlace() {
             p={(1, 2, 4)}
           >
             <Text fontSize="lg" marginTop={6}>
-              Available Materials
+              Assets listed for selling
             </Text>
             <SelectMaterialsDropDown filter={filter} setFilter={setFilter} />
           </Box>
+
           <ListAssets
-            selectedAsset={selectedAsset}
-            setselectedAsset={setselectedAsset}
+            selectedAsset={toSell}
+            setselectedAsset={setToSell}
             filterOption={filter}
           ></ListAssets>
+
+          <Box
+            display="flex"
+            flexDir="column"
+            justifyContent="center"
+            bg={background1}
+            borderRadius="md"
+            p={[1, 2]}
+          >
+            {/* <SaleForm selectedAsset={toSell} /> */}
+
+            <Button
+              onClick={async () => {
+                console.log(toSell);
+                try {
+                  const hash = await sell(toSell, 5000000);
+                  setConfirmation(hash);
+                } catch (e) {
+                  window.alert("Your transaction has not been submited");
+                }
+                const sellregistration = await registerSell(
+                  toSell.unit,
+                  5000000,
+                  address
+                );
+                console.log(sellregistration);
+              }}
+              display="flex"
+              colorScheme="teal"
+              size="lg"
+              m={1}
+            >
+              Sell item
+            </Button>
+            {/*  <BuyMessageModal
+              confirmation={confirmation}
+              setConfirmation={setConfirmation}
+              suplementaryinfo={`Your Item has been listed for sale`}
+            /> */}
+          </Box>
         </GridItem>
         <GridItem
           rowStart={[6, 1]}
@@ -74,32 +127,7 @@ export default function MarketPlace() {
           display="flex"
           flexDir="column"
           justifyContent="center"
-        >
-          <Box
-            display="flex"
-            flexDir="column"
-            justifyContent="center"
-            bg={background1}
-            borderRadius="md"
-            p={[1, 2]}
-          >
-            <SaleForm selectedAsset={selectedAsset} />
-
-            <Button
-              onClick={async () => {
-                //const confirmation = await sell(selectedAsset, 5000000);
-                const confirmation = await CancelSell();
-                setConfirmation(confirmation);
-              }}
-              display="flex"
-              colorScheme="teal"
-              size="lg"
-              m={1}
-            >
-              Sell Items
-            </Button>
-          </Box>
-        </GridItem>
+        ></GridItem>
 
         <GridItem
           rowStart={[8, 1]}
@@ -121,66 +149,31 @@ export default function MarketPlace() {
             p={(1, 2, 4)}
           >
             <Text as="h6" fontSize={"lg"} marginTop={6}>
-              Crafting Recipes
+              Assets available to Buy
             </Text>
             <SelectMaterialsDropDown />
           </Box>
 
-          <SimpleGrid w="100%" m={2} templateColumns="repeat(2,1fr)" gap={2}>
-            <GridItem
-              overflowY="scroll"
-              w="100%"
-              bg={background1}
-              borderRadius="md"
-              h="40rem"
-              p={[1, 2, 4]}
-            >
-              <SimpleGrid columns={1} spacing={10}>
-                {weaponsURLs.map((nft, i) => (
-                  <GridItem
-                    className={styles.card}
-                    w="100%"
-                    key={i}
-                    _hover={{
-                      background: "gray.500",
-                      w: "100%",
-                    }}
-                  >
-                    {
-                      <img
-                        width="500rem"
-                        onClick={() => setselectedRecipe(nft)}
-                        src={`https://ipfs.infura.io/ipfs/${nft.img}`}
-                      />
-                    }
-                    <div>
-                      <p>
-                        {/*`${JSON.stringify(nft.onchain_metadata.name )} `*/}
-                      </p>
-                    </div>
-                  </GridItem>
-                ))}
-              </SimpleGrid>
-            </GridItem>
-            <GridItem
-              display="flex"
-              flexDir="column"
-              colSpan={1}
-              justifyContent="center"
-              bg={background1}
-            >
-              <Box
-                display="flex"
-                flexDir="column"
-                colSpan={1}
-                justifyContent="center"
-                alignContent="center"
-                bg={background1}
-                height="8rem"
-                borderRadius="md"
-              ></Box>
-            </GridItem>
-          </SimpleGrid>
+          <ListAssets
+            selectedAsset={toBuy}
+            setselectedAsset={setToBuy}
+            filterOption={filter}
+            isMarket={true}
+            filterdata={
+              "e93ec6209631511713b832e5378f77b587762bc272893a7163ecc46e"
+            }
+          ></ListAssets>
+          <Button
+            onClick={async () => {
+              const cancelSell = await CancelSell(toBuy);
+            }}
+            display="flex"
+            colorScheme="teal"
+            size="lg"
+            m={1}
+          >
+            Cancell Sale
+          </Button>
         </GridItem>
       </Grid>
     </Box>

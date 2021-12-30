@@ -8,13 +8,14 @@ import {
 import axios from "axios";
 import CoinSelection from "./CoinSelection.js";
 import { Buffer } from "safe-buffer";
-import { getParams } from "./apiServerCalls";
+import { getParams, getUtxos } from "./apiServerCalls";
 import { languageViews } from "./Types/LanguageViews";
 import { PlutusDataObject } from "./Types/PlutusDataObject";
 import { PlutusField, PlutusFieldType } from "./Types/PlutusField";
 import { Address } from "./custom_modules/@emurgo/cardano-serialization-lib-browser/cardano_serialization_lib_bg";
 import { Value } from "./@emurgo/cardano-serialization-lib-browser/cardano_serialization_lib_bg";
 import { Contract } from "./marketPlaceContract";
+import { registerSell } from "./apiServerCalls";
 
 export function toHex(bytes) {
   return Buffer.from(bytes, "hex").toString("hex");
@@ -97,7 +98,7 @@ export const sendLovelacestoAddres = async function (
   }
 };
 
-export const addressToBech32 = async () => {
+export const addressBech32 = async () => {
   await Loader.load();
   const address = (await window.cardano.getUsedAddresses())[0];
   return Loader.Cardano.Address.from_bytes(
@@ -217,6 +218,7 @@ export async function addWitnessandSign(txBuilder) {
 }
 
 export async function getBalance(address) {
+  //TODO: check this!
   try {
     const uTXOapi = `${ADDRESSES}/${address}`;
     const config = {
@@ -977,7 +979,7 @@ export async function sell(selectedAsset, askingPrice, metadata) {
 
     const { txBuilder } = await initTx(protocolParameters);
 
-    const hexAddress = await addressToBech32();
+    const hexAddress = await addressBech32();
 
     const clientAddress = CustomLoader.Cardano.Address.from_bech32(hexAddress);
 
@@ -988,9 +990,9 @@ export async function sell(selectedAsset, askingPrice, metadata) {
     //console.log(pkh);
     console.log(Buffer.from(pkh, "hex").toString("hex"));
 
-    const policyId = selectedAsset[0].unit.slice(0, 56);
+    const policyId = selectedAsset.unit.slice(0, 56);
     //console.log(policyId);
-    const assetNameHex = selectedAsset[0].unit.slice(56);
+    const assetNameHex = selectedAsset.unit.slice(56);
 
     console.log(assetNameHex);
 
@@ -1006,7 +1008,7 @@ export async function sell(selectedAsset, askingPrice, metadata) {
 
     const hoskyDatumObject = OfferDatum(pkh, askingPrice, policyId, assetName);
 
-    //console.log(hoskyDatumObject);
+    console.log(hoskyDatumObject);
 
     const datum = await ToPlutusData(hoskyDatumObject);
 
@@ -1029,8 +1031,8 @@ export async function sell(selectedAsset, askingPrice, metadata) {
 
     const outPutValue_ = await amountToValue([
       {
-        unit: selectedAsset[0].unit,
-        quantity: selectedAsset[0].quantity,
+        unit: selectedAsset.unit,
+        quantity: selectedAsset.quantity,
       },
     ]);
 
@@ -1121,12 +1123,14 @@ export async function sell(selectedAsset, askingPrice, metadata) {
     console.log("Full Tx Size", signedTx.to_bytes().length);
 
     const txHash = await window.cardano.submitTx(toHex(signedTx.to_bytes()));
-    console.log("Your item has been listened at sale for a price of ${price}");
+    console.log(
+      `Your item has been listened at sale for a price of ${askingPrice}`
+    );
     return txHash;
   }
 }
 
-export async function CancelSell(metadata) {
+export async function CancelSell(asset, metadata) {
   await CustomLoader.load();
   const martketAddressbech32 =
     "addr_test1wp9cnq967kcf7dtn7fhpqr0cz0wjffse67qc3ww4v3c728c4qjr6j";
@@ -1156,6 +1160,43 @@ export async function CancelSell(metadata) {
     return { txBuilder };
   }
 
+  async function getUtxoNFT(asset, marketAddress) {
+    if (!(asset.quantity == 1)) {
+      console.log("this is not an NFT!");
+    }
+
+    const utxos = await getUtxos(marketAddress);
+
+    const stringutxos = utxos.map((x) => JSON.stringify(x));
+    const filteredstring = stringutxos.filter((x) =>
+      x.includes(`${asset.unit}`)
+    );
+    const selectedUtox = JSON.parse(filteredstring);
+
+    const valueutxo = await assetsToValue_(selectedUtox.amount);
+
+    const inpututxo = CustomLoader.Cardano.TransactionInput.new(
+      CustomLoader.Cardano.TransactionHash.from_bytes(
+        Buffer.from(selectedUtox.tx_hash, "hex")
+      ),
+      selectedUtox.tx_index
+    );
+
+    const outpututxo = CustomLoader.Cardano.TransactionOutput.new(
+      CustomLoader.Cardano.Address.from_bech32(marketAddress),
+      valueutxo
+    );
+
+    const utxoNFT = CustomLoader.Cardano.TransactionUnspentOutput.new(
+      inpututxo,
+      outpututxo
+    );
+
+    return utxoNFT;
+  }
+
+  const scriptUtxo = await getUtxoNFT(asset, martketAddressbech32);
+
   const txId =
     "07fc55a84dd98a51f11967e45cee479065b148ad30802d4313b10dfe06ff851f";
   const txIndex = "0";
@@ -1170,7 +1211,7 @@ export async function CancelSell(metadata) {
 
   const { txBuilder } = await initTx(protocolParameters);
 
-  const hexAddress = await addressToBech32();
+  const hexAddress = await addressBech32();
 
   const clientAddress = CustomLoader.Cardano.Address.from_bech32(hexAddress);
 
@@ -1179,17 +1220,19 @@ export async function CancelSell(metadata) {
 
   const pkh = baseAddress.payment_cred().to_keyhash().to_bytes();
   console.log(Buffer.from(pkh, "hex").toString("hex"));
-  const assetName = "oakwood21";
-  const assetNameHex = asciiToHex(assetName);
+  const assetNameHex = asset.unit.slice(56);
+  const assetName = Buffer.from(assetNameHex, "hex").toString("utf8");
 
-  const policyId = "e93ec6209631511713b832e5378f77b587762bc272893a7163ecc46e";
+  const policyId = asset.unit.slice(0, 56);
 
   const unit = policyId + assetNameHex;
   console.log(unit);
 
-  const nfTValue = await assetsToValue_([{ unit: unit, quantity: "1" }]);
+  const nfTValue = await assetsToValue_([
+    { unit: asset.unit, quantity: asset.quantity },
+  ]);
 
-  nfTValue.set_coin(CustomLoader.Cardano.BigNum.from_str("1851850"));
+  //nfTValue.set_coin(CustomLoader.Cardano.BigNum.from_str("1851850"));
   //console.log(  nfTValue);
 
   const nfTValueBytes = nfTValue.to_bytes();
@@ -1203,13 +1246,6 @@ export async function CancelSell(metadata) {
   );
   //console.log(nfTValueBytes);
 
-  const scriptUtxo = CustomLoader.Cardano.TransactionUnspentOutput.new(
-    CustomLoader.Cardano.TransactionInput.new(
-      CustomLoader.Cardano.TransactionHash.from_bytes(fromHex(txId)),
-      txIndex
-    ),
-    CustomLoader.Cardano.TransactionOutput.new(marketAddress, nfTValue)
-  );
   const utxos = (await window.cardano.getUtxos()).map((utxo) =>
     CustomLoader.Cardano.TransactionUnspentOutput.from_bytes(fromHex(utxo))
   );
@@ -1278,7 +1314,7 @@ export async function CancelSell(metadata) {
 
     const r = CustomLoader.Cardano.Redeemer.new(
       CustomLoader.Cardano.RedeemerTag.new_spend(),
-      await CustomLoader.Cardano.BigNum.from_str(index),
+      CustomLoader.Cardano.BigNum.from_str(index),
       redeemerData,
       CustomLoader.Cardano.ExUnits.new(
         CustomLoader.Cardano.BigNum.from_str("7000000"),
@@ -1288,7 +1324,12 @@ export async function CancelSell(metadata) {
 
     return r;
   };
-  redeemers.add(await SimpleRedeemer(txIndex));
+
+  const scriptUtxoIndex = txBuilder
+    .index_of_input(scriptUtxo.input())
+    .toString();
+
+  redeemers.add(await SimpleRedeemer(scriptUtxoIndex));
 
   const scripts = CustomLoader.Cardano.PlutusScripts.new();
   scripts.add(CustomLoader.Cardano.PlutusScript.new(fromHex(Contract.cborHex)));
@@ -1338,6 +1379,9 @@ export async function CancelSell(metadata) {
 
   if (collateralHex.length === 0) {
     console.log("there is not collaterals for this transaction");
+    window.alert(
+      "Your transaction has not been submited, in order to list your item, provide some collateral in the Nami Wallet configuration."
+    );
     return;
   }
 
@@ -1380,11 +1424,16 @@ export async function CancelSell(metadata) {
 
   console.log("Full Tx Size", signedTx.to_bytes().length);
 
-  const txHash = await window.cardano.submitTx(toHex(signedTx.to_bytes()));
-  console.log(
-    `Your item has been listened at sale for a price of ${askingPrice}`
-  );
-  return txHash;
+  try {
+    const txHash = await window.cardano.submitTx(toHex(signedTx.to_bytes()));
+    const registration = await registerSell(txHash);
+    console.log(
+      `Your item has been listed for sale with a price of ${askingPrice} Ada,  The transaction Hash for  the listing transaction is ${txHash}`
+    );
+    return txHash;
+  } catch (e) {
+    console.log(e);
+  }
 }
 export async function assetsToValue_(assets) {
   await CustomLoader.load();

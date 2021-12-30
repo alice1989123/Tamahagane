@@ -1,4 +1,4 @@
-import { addressToBech32 , toHex, fromHex } from "../cardano/wallet.js";
+import { addressBech32 , toHex, fromHex } from "../cardano/wallet.js";
 import axios from "axios";
 import {   INFURA } from "../constants/routes";
 import { useState, useEffect } from "react";
@@ -38,7 +38,7 @@ export default function ListAssets({
   async function loadNFTs() {
     await window.cardano.enable();
 
-    const address = await addressToBech32();
+    const address = await addressBech32();
 
     const getAssets = async function () {
       // This function trows an error 404 if the address has not had any tx...  FIX!!!
