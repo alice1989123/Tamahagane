@@ -8,9 +8,9 @@ import SaleForm from "../components/SaleForm.jsx";
 import weaponsURLs from "../constants/weaponsURLs.js";
 import SelectMaterialsDropDown from "../components/MaterialsDropdown.jsx";
 import styles from "./CraftMaterials.module.scss";
-import { CancelSell, sell, addressBech32 } from "../cardano/wallet";
+import { CancelSell, sell, addressBech32, BuyNFT } from "../cardano/wallet";
 import { registerSell } from "../cardano/apiServerCalls";
-import { BuyMessageModal } from "../components/BuyMessageModal.jsx";
+import { BuyMessageModal } from "../components/BuyMessageModal";
 
 export default function MarketPlace({ ...props }) {
   //const { address } = props;
@@ -173,6 +173,17 @@ export default function MarketPlace({ ...props }) {
             m={1}
           >
             Cancell Sale
+          </Button>
+          <Button
+            onClick={async () => {
+              const NFTpurchase = await BuyNFT(toBuy);
+            }}
+            display="flex"
+            colorScheme="teal"
+            size="lg"
+            m={1}
+          >
+            Buy NFT
           </Button>
         </GridItem>
       </Grid>
