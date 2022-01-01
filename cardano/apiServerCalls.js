@@ -1,5 +1,5 @@
 import axios from "axios";
-import { addressToBech32, signTx_, submitTx } from "./wallet";
+import { addressBech32, signTx_, submitTx } from "./wallet";
 import { sendLovelacestoAddres } from "./wallet";
 
 const serverApi = process.env.NEXT_PUBLIC_SERVER_API;
@@ -16,7 +16,7 @@ export async function burningTokens() {
 }
 
 export async function buyCards(buyOption) {
-  const address = await addressToBech32();
+  const address = await addressBech32();
   const balance = await window.cardano.getBalance();
   const utxos = await window.cardano.getUtxos();
   const TamahaganeAddres =
@@ -54,7 +54,7 @@ export async function buyCards(buyOption) {
 }
 
 export async function forgeWeapon(tokensToBurn, nFTtoForge) {
-  const address = await addressToBech32();
+  const address = await addressBech32();
   const balance = await window.cardano.getBalance();
   const utxos = await window.cardano.getUtxos();
 
@@ -114,9 +114,12 @@ export async function registerSell(txHash, price, address) {
   }
 }
 
-export async function martketData() {
+export async function martketData(marketaddress) {
   try {
-    const response = await axios.get(`${serverApi}${apiEndPoints.filter}`);
+    //console.log(marketaddress);
+    const response = await axios.post(`${serverApi}${apiEndPoints.filter}`, {
+      marketaddress: marketaddress,
+    });
     const data = response.data;
     console.log(data);
     return data;
@@ -128,7 +131,6 @@ export async function martketData() {
 
 export async function getUtxos(address) {
   try {
-    console.log(`${serverApi}${apiEndPoints.getUtxos}`);
     const response = await axios.post(`${serverApi}${apiEndPoints.getUtxos}`, {
       address: address,
     });

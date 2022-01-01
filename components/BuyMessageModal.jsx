@@ -2,8 +2,7 @@ import { Button, Box, Text } from "@chakra-ui/react";
 import { CheckIcon } from "@chakra-ui/icons";
 import styles from "./Modals.module.scss";
 
-const TamahaganeAddres =
-  "addr_test1qzwmldsyxrh495suc4jcypj9jrjwl42cu66sk5uw74gr6yqcj7t29mqnxhesmlumchk7wtdghejcfkd9kss024cttzjsf4685z";
+
 
 import {
   Modal,
@@ -15,7 +14,7 @@ import {
   ModalCloseButton,
 } from "@chakra-ui/modal";
 
-function BuyMessageModal({ confirmation, setConfirmation,  suplementaryinfo }) {
+export default function BuyMessageModal({ confirmation, setConfirmation,  suplementaryinfo }) {
   return (
     <>
       <Modal
@@ -69,4 +68,3 @@ function BuyMessageModal({ confirmation, setConfirmation,  suplementaryinfo }) {
   );
 }
 
-export default BuyMessageModal;

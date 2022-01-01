@@ -22,7 +22,7 @@
     "next-env.d.ts",
     "**/*.ts",
     "**/*.tsx"
-  ],
+, "cardano/wallet.js"  ],
   "exclude": [
     "node_modules"
   ]

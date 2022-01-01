@@ -1,5 +1,12 @@
 import { useState, useEffect } from "react";
-import { Text, Box, Grid, GridItem, SimpleGrid } from "@chakra-ui/layout";
+import {
+  HStack,
+  Text,
+  Box,
+  Grid,
+  GridItem,
+  SimpleGrid,
+} from "@chakra-ui/layout";
 import { Button } from "@chakra-ui/react";
 import Image from "next/image";
 import ListAssets from "../components/ListAssetsMarketPlace";
@@ -10,7 +17,6 @@ import SelectMaterialsDropDown from "../components/MaterialsDropdown.jsx";
 import styles from "./CraftMaterials.module.scss";
 import { CancelSell, sell, addressBech32, BuyNFT } from "../cardano/wallet";
 import { registerSell } from "../cardano/apiServerCalls";
-import { BuyMessageModal } from "../components/BuyMessageModal";
 
 export default function MarketPlace({ ...props }) {
   //const { address } = props;
@@ -18,15 +24,15 @@ export default function MarketPlace({ ...props }) {
   const [toSell, setToSell] = useState(null);
   const background = useColorModeValue("white", "gray.750");
   const background1 = useColorModeValue("gray.100", "gray.700");
-  const [confirmation, setConfirmation] = useState(false);
   const [filter, setFilter] = useState(["rawMaterial"]);
   const [toBuy, setToBuy] = useState(null);
   const [address, setaddress] = useState(undefined);
 
   useEffect(async function getAddress() {
-    const cardano = await window.cardano.enable();
-    const address = await addressBech32();
-    setaddress(address);
+    if (window.cardano) {
+      const address = await addressBech32();
+      setaddress(address);
+    }
   }, []);
 
   return (
@@ -67,7 +73,7 @@ export default function MarketPlace({ ...props }) {
             p={(1, 2, 4)}
           >
             <Text fontSize="lg" marginTop={6}>
-              Assets listed for selling
+              Assets available in the Wallet
             </Text>
             <SelectMaterialsDropDown filter={filter} setFilter={setFilter} />
           </Box>
@@ -79,6 +85,8 @@ export default function MarketPlace({ ...props }) {
           ></ListAssets>
 
           <Box
+            width={"100%"}
+            height={"100"}
             display="flex"
             flexDir="column"
             justifyContent="center"
@@ -86,36 +94,7 @@ export default function MarketPlace({ ...props }) {
             borderRadius="md"
             p={[1, 2]}
           >
-            {/* <SaleForm selectedAsset={toSell} /> */}
-
-            <Button
-              onClick={async () => {
-                console.log(toSell);
-                try {
-                  const hash = await sell(toSell, 5000000);
-                  setConfirmation(hash);
-                } catch (e) {
-                  window.alert("Your transaction has not been submited");
-                }
-                const sellregistration = await registerSell(
-                  toSell.unit,
-                  5000000,
-                  address
-                );
-                console.log(sellregistration);
-              }}
-              display="flex"
-              colorScheme="teal"
-              size="lg"
-              m={1}
-            >
-              Sell item
-            </Button>
-            {/*  <BuyMessageModal
-              confirmation={confirmation}
-              setConfirmation={setConfirmation}
-              suplementaryinfo={`Your Item has been listed for sale`}
-            /> */}
+            <SaleForm toSell={toSell} address={address} />
           </Box>
         </GridItem>
         <GridItem
@@ -149,7 +128,7 @@ export default function MarketPlace({ ...props }) {
             p={(1, 2, 4)}
           >
             <Text as="h6" fontSize={"lg"} marginTop={6}>
-              Assets available to Buy
+              Assets in the Market place
             </Text>
             <SelectMaterialsDropDown />
           </Box>
@@ -163,28 +142,44 @@ export default function MarketPlace({ ...props }) {
               "e93ec6209631511713b832e5378f77b587762bc272893a7163ecc46e"
             }
           ></ListAssets>
-          <Button
-            onClick={async () => {
-              const cancelSell = await CancelSell(toBuy);
-            }}
+          <Box
             display="flex"
-            colorScheme="teal"
-            size="lg"
-            m={1}
+            flexDir="column"
+            alignItems="center"
+            justifyContent="space-around"
+            bg={background1}
+            w="100%"
+            borderRadius="md"
+            p={(1, 2, 4)}
+            width={"100%"}
+            height={"100"}
           >
-            Cancell Sale
-          </Button>
-          <Button
-            onClick={async () => {
-              const NFTpurchase = await BuyNFT(toBuy);
-            }}
-            display="flex"
-            colorScheme="teal"
-            size="lg"
-            m={1}
-          >
-            Buy NFT
-          </Button>
+            <HStack alignItems="center">
+              <Button
+                isLoading
+                onClick={async () => {
+                  const cancelSell = await CancelSell(toBuy);
+                }}
+                display="flex"
+                colorScheme="teal"
+                size="lg"
+                m={1}
+              >
+                Cancel Sale
+              </Button>
+              <Button
+                onClick={async () => {
+                  const NFTpurchase = await BuyNFT(toBuy);
+                }}
+                display="flex"
+                colorScheme="teal"
+                size="lg"
+                m={1}
+              >
+                Buy NFT
+              </Button>
+            </HStack>
+          </Box>
         </GridItem>
       </Grid>
     </Box>

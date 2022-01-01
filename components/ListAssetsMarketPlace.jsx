@@ -2,11 +2,12 @@ import { addressBech32, toHex, fromHex } from "../cardano/wallet.js";
 import axios from "axios";
 import {   INFURA } from "../constants/routes";
 import { useState, useEffect } from "react";
-import { GridItem, SimpleGrid } from "@chakra-ui/layout";
+import { Badge, GridItem, SimpleGrid , Center} from "@chakra-ui/layout";
 import { useColorModeValue } from "@chakra-ui/color-mode";
 import styles from "./LisAssets.module.scss";
 import { selector } from "../constants/selector";
 import { getAssets , martketData} from "../cardano/apiServerCalls.js";
+import { marketScriptAdresssBech32 } from "../cardano/marketPLaceAddress.js";
 const server = process.env.NEXT_PUBLIC_SERVER_API
 
 
@@ -31,18 +32,20 @@ export default function ListAssets({
   const [NFTs, setNFTs] = useState([]);
   const [loadingState, setLoadingState] = useState("not-loaded");
   const marketAddress =
-    "addr_test1wp9cnq967kcf7dtn7fhpqr0cz0wjffse67qc3ww4v3c728c4qjr6j";
+  marketScriptAdresssBech32;
   useEffect(() => {
     loadNFTs();
   }, [filterOption]);
   async function loadNFTs( ) {
 
+    if (window.cardano){
+
    await window.cardano.enable()
    const selfAddress = await addressBech32()
-   const  address = isMarket ? marketAddress :  selfAddress
-   const marketNFTs = await martketData();
+   const marketNFTs = await martketData(marketAddress);
    console.log(marketNFTs , isMarket )
-    const data= isMarket ?  marketNFTs.map(x => x.unit) : await getAssets(selfAddress)
+   
+    const data= (isMarket && marketNFTs ==undefined ) ? [] :   isMarket ?  marketNFTs.map(x => x.unit) : await getAssets(selfAddress)
 
     console.log(data)
     
@@ -56,27 +59,48 @@ export default function ListAssets({
       console.log(data1)
       const data2 = await Promise.all(
         data1.map(
-          async (x) =>
-            await axios.post(`${server}/api/assetss/info`, {
+          async (x) => {
+          const info =   await axios.post(`${server}/api/assetss/info`, {
               asset: x,
             })
+        
+          return info
+          
+          }
+
         )
       );
       let filteredMetadata_ = data2.filter(
         (x) =>
-          x.data.onchain_metadata &&
+          x.data.onchain_metadata && // We only display nft with metadata
           x.data.onchain_metadata //&&
          // x.data.onchain_metadata.description &&
          // x.data.onchain_metadata.description.split("-")[0] == filterOption
       );
       let filteredMetadata = filteredMetadata_.map((x) => x.data);
 
-      const assets = data2.map((x) => x.data.asset);
+      console.log(filteredMetadata)
+
+
+      if (isMarket) {filteredMetadata.forEach( 
+        (x,i) => { 
+          const address = marketNFTs.filter(y =>y.unit == x.asset)[0].address ;
+
+          console.log( marketNFTs[0].unit , filteredMetadata[0].asset )
+
+          const price = marketNFTs.filter(y =>y.unit == x.asset)[0].price
+
+          console.log(marketNFTs )
+          
+           x[`price`] = price ; x[`address`]=address })
+
+        }
+
       
       setNFTs(filteredMetadata);
 
       setLoadingState("loaded");
-    }
+    }} else{setLoadingState("loaded")}
   }
 
   return (
@@ -122,7 +146,9 @@ export default function ListAssets({
                   const asset = {                    
                     metadata: `${metadata}`,
                     quantity: `${nft.quantity}`,
-                    unit: `${nft.asset}`,                    
+                    unit: `${nft.asset}`,
+                    price: nft.price,
+                    address : nft.address                    
                   };
                   
 
@@ -132,6 +158,11 @@ export default function ListAssets({
                  setselectedAsset(asset)}}
               />
             }
+            <Center>
+               { isMarket ?  <Badge size='m' borderRadius='full' px='2' colorScheme='green'>
+               ${nft.price/ 1000000}    ₳
+          </Badge>:    null}
+            </Center>
             <div>
               <p> {/*`${JSON.stringify(nft.onchain_metadata.name)}`*/}</p>
             </div>

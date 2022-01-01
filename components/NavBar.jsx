@@ -70,7 +70,7 @@ export default function Navbar() {
                 {colorMode === "light" ? <MoonIcon /> : <SunIcon />}
               </Button>
 
-              {/* <Menu id={"menu12312"}> // there seems to be perfomance issues with chakra UI menu as well as how chakra manages uids it needs to be fixed 
+              {/* <Menu id={"menu12312"}> // TODO: there seems to be perfomance issues with chakra UI menu as well as how chakra manages uids it needs to be fixed 
                 <MenuButton
                   id={"menuButton1231"}
                   as={Button}

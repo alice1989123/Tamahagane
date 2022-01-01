@@ -1,0 +1,2 @@
+export const marketScriptAdresssBech32 =
+  "addr_test1wptecnxcpmtg29nhu623cyzxx69xxu8snehk08kjchwga2sk0g5t9";

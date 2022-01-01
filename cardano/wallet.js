@@ -16,6 +16,7 @@ import { Address } from "./custom_modules/@emurgo/cardano-serialization-lib-brow
 import { Value } from "./@emurgo/cardano-serialization-lib-browser/cardano_serialization_lib_bg";
 import { Contract } from "./marketPlaceContract";
 import { registerSell } from "./apiServerCalls";
+import { marketScriptAdresssBech32 } from "../cardano/marketPLaceAddress";
 
 export function toHex(bytes) {
   return Buffer.from(bytes, "hex").toString("hex");
@@ -32,7 +33,7 @@ export const sendLovelacestoAddres = async function (
   const amount = LovelacestoAddress + estimatedFee;
 
   if (await window.cardano.enable()) {
-    const clientAddress = await addressToBech32();
+    const clientAddress = await addressBech32();
 
     await Loader.load();
 
@@ -926,13 +927,20 @@ export const valueToAssets = (value) => {
   return assets;
 };
 
-export async function sell(selectedAsset, askingPrice, metadata) {
+export async function sell(
+  selectedAsset,
+  askingPrice //, quantity
+) {
   if (selectedAsset.length == 0) {
     console.log("you have not selected an asset to sell");
+    return;
   } else {
+    if (selectedAsset.quantity !== "1") {
+      console.log("This is not an NFT!");
+      return;
+    }
     await CustomLoader.load();
-    const martketAddressbech32 =
-      "addr_test1wp9cnq967kcf7dtn7fhpqr0cz0wjffse67qc3ww4v3c728c4qjr6j";
+    const martketAddressbech32 = marketScriptAdresssBech32;
     const marketAddress =
       CustomLoader.Cardano.Address.from_bech32(martketAddressbech32);
 
@@ -987,7 +995,6 @@ export async function sell(selectedAsset, askingPrice, metadata) {
       CustomLoader.Cardano.BaseAddress.from_address(clientAddress);
 
     const pkh = baseAddress.payment_cred().to_keyhash().to_bytes();
-    //console.log(pkh);
     console.log(Buffer.from(pkh, "hex").toString("hex"));
 
     const policyId = selectedAsset.unit.slice(0, 56);
@@ -1008,17 +1015,17 @@ export async function sell(selectedAsset, askingPrice, metadata) {
 
     const hoskyDatumObject = OfferDatum(pkh, askingPrice, policyId, assetName);
 
-    console.log(hoskyDatumObject);
+    //console.log(hoskyDatumObject);
 
     const datum = await ToPlutusData(hoskyDatumObject);
 
-    console.log(Buffer.from(datum.to_bytes(), "hex").toString("hex"));
+    //console.log(Buffer.from(datum.to_bytes(), "hex").toString("hex"));
 
     //    console.log(datum);
 
     const datumHash = CustomLoader.Cardano.hash_plutus_data(datum);
 
-    console.log(Buffer.from(datumHash.to_bytes(), "hex").toString("hex"));
+    // console.log(Buffer.from(datumHash.to_bytes(), "hex").toString("hex"));
 
     /*  console.log(
       Buffer.from(
@@ -1027,7 +1034,7 @@ export async function sell(selectedAsset, askingPrice, metadata) {
       ).toString("hex")
     ); */
 
-    console.log(Buffer.from(datum.to_bytes(), "hex").toString("hex"));
+    //console.log(Buffer.from(datum.to_bytes(), "hex").toString("hex"));
 
     const outPutValue_ = await amountToValue([
       {
@@ -1074,37 +1081,44 @@ export async function sell(selectedAsset, askingPrice, metadata) {
     const transactionWitnessSet =
       CustomLoader.Cardano.TransactionWitnessSet.new();
 
-    if (metadata) {
-      aux_data = CustomLoader.Cardano.AuxiliaryData.new();
-      const generalMetadata =
-        CustomLoader.Cardano.GeneralTransactionMetadata.new();
-      Object.keys(metadata).forEach((label) => {
-        Object.keys(metadata[label]).length > 0 &&
-          generalMetadata.insert(
-            CustomLoader.Cardano.BigNum.from_str(label),
-            CustomLoader.Cardano.encode_json_str_to_metadatum(
-              JSON.stringify(metadata[label]),
-              1
-            )
-          );
-      });
+    const metadata = {
+      0: hexAddress.slice(0, 60),
+      1: hexAddress.slice(60),
+      2: askingPrice,
+    };
+    //console.log(metadata);
+    const aux_data = CustomLoader.Cardano.AuxiliaryData.new();
+    const generalMetadata =
+      CustomLoader.Cardano.GeneralTransactionMetadata.new();
 
-      aux_data.set_metadata(generalMetadata);
-      txBuilder.set_auxiliary_data(aux_data);
-    }
+    Object.keys(metadata).forEach((label) => {
+      generalMetadata.insert(
+        CustomLoader.Cardano.BigNum.from_str(label),
+        CustomLoader.Cardano.encode_json_str_to_metadatum(
+          JSON.stringify(metadata[label]),
+          1
+        )
+      );
+    });
+
+    aux_data.set_metadata(generalMetadata);
+    txBuilder.set_auxiliary_data(aux_data);
 
     txBuilder.add_change_if_needed(clientAddress);
 
     const txBody = txBuilder.build();
+
     const tx = CustomLoader.Cardano.Transaction.new(
       txBody,
       CustomLoader.Cardano.TransactionWitnessSet.new(),
-      txBody.auxiliary_data
+      aux_data
     );
     const size = tx.to_bytes().length * 2;
     console.log(size);
     if (size > protocolParameters.maxTxSize)
       throw new Error("MAX_SIZE_REACHED");
+
+    console.log(toHex(tx.to_bytes()));
     let txVkeyWitnesses = await window.cardano.signTx(
       toHex(tx.to_bytes()),
       true
@@ -1130,10 +1144,10 @@ export async function sell(selectedAsset, askingPrice, metadata) {
   }
 }
 
-export async function CancelSell(asset, metadata) {
+export async function CancelSell(asset) {
   await CustomLoader.load();
-  const martketAddressbech32 =
-    "addr_test1wp9cnq967kcf7dtn7fhpqr0cz0wjffse67qc3ww4v3c728c4qjr6j";
+  const askingPrice = asset.price;
+  const martketAddressbech32 = marketScriptAdresssBech32;
   const marketAddress =
     CustomLoader.Cardano.Address.from_bech32(martketAddressbech32);
 
@@ -1196,8 +1210,6 @@ export async function CancelSell(asset, metadata) {
   }
 
   const scriptUtxo = await getUtxoNFT(asset, martketAddressbech32);
-
-  const askingPrice = "5000000";
 
   const dummy_inputDAtaHash = // TODO: Check about it! Is it nedeed?
     "be01a7c9cd7b5982ea98022cac268913311a5a98ad6a37b3d67f1bf918b7b8e8";
@@ -1422,9 +1434,8 @@ export async function CancelSell(asset, metadata) {
 
   try {
     const txHash = await window.cardano.submitTx(toHex(signedTx.to_bytes()));
-    const registration = await registerSell(txHash);
     console.log(
-      `Your item has been listed for sale with a price of ${askingPrice} Ada,  The transaction Hash for  the listing transaction is ${txHash}`
+      `Your item has been de-listed from the market place with transaction is ${txHash}`
     );
     return txHash;
   } catch (e) {
@@ -1432,34 +1443,33 @@ export async function CancelSell(asset, metadata) {
   }
 }
 
-export async function BuyNFT(asset, metadata) {
+export async function BuyNFT(asset) {
   await CustomLoader.load();
 
-  const askingPrice = "5000000";
+  const askingPrice = asset.price;
 
   const marketPkhStr =
-    "a75c75fa79bc7d53ef715d64745a7a01c2c1f7653b2ae962413ac521";
+    "dca6035712f164db2f99c71404d392115d2bdde366fbbe359ae01f1d";
 
   const paymentvKeyMarrket = CustomLoader.Cardano.StakeCredential.from_keyhash(
+    //TODO: check how to get an address that works!
     CustomLoader.Cardano.Ed25519KeyHash.from_bytes(
       Buffer.from(marketPkhStr, "hex")
     )
   );
 
-  const marketAddress = CustomLoader.Cardano.EnterpriseAddress.new(
+  const marketAddress =
+    "addr_test1qrw2vq6hztckfke0n8r3gpxnjgg4627audn0h034ntsp78thnae0km53d08p2paq2kp524nxkzzja099utujetdz867qpf8p9s"; //  Dummy market address
+
+  /* CustomLoader.Cardano.EnterpriseAddress.new(   // I tried to derive the address form the pkh but that aparently did not work
     CustomLoader.Cardano.NetworkId.testnet,
     paymentvKeyMarrket
-  ).to_address();
-
-  console.log(marketAddress.to_bech32());
+  ).to_address(); */
 
   /* const marketAddress =
     CustomLoader.Cardano.Address.from_bech32(martketPkhBech32); */
-
-  const sellerAddressBech32 =
-    "addr_test1qrw2vq6hztckfke0n8r3gpxnjgg4627audn0h034ntsp78thnae0km53d08p2paq2kp524nxkzzja099utujetdz867qpf8p9s";
-  const scriptAddressBech32 =
-    "addr_test1wp9cnq967kcf7dtn7fhpqr0cz0wjffse67qc3ww4v3c728c4qjr6j";
+  const sellerAddressBech32 = asset.address;
+  const scriptAddressBech32 = marketScriptAdresssBech32;
   const scriptAddress =
     CustomLoader.Cardano.Address.from_bech32(scriptAddressBech32);
 
@@ -1492,6 +1502,7 @@ export async function BuyNFT(asset, metadata) {
   async function getUtxoNFT(asset, marketAddress) {
     if (!(asset.quantity == 1)) {
       console.log("this is not an NFT!");
+      return;
     }
 
     const utxos = await getUtxos(marketAddress);
@@ -1556,7 +1567,7 @@ export async function BuyNFT(asset, metadata) {
   ]);
 
   //nfTValue.set_coin(CustomLoader.Cardano.BigNum.from_str("1851850"));
-  //console.log(  nfTValue);
+  //console.log(nfTValue);
 
   const nfTValueBytes = nfTValue.to_bytes();
 
@@ -1573,8 +1584,6 @@ export async function BuyNFT(asset, metadata) {
     CustomLoader.Cardano.TransactionUnspentOutput.from_bytes(fromHex(utxo))
   );
 
-  // Outputs
-
   const NFToutPut = CustomLoader.Cardano.TransactionOutput.new(
     clientAddress,
     CustomLoader.Cardano.Value.from_bytes(nfTValueBytes).checked_add(
@@ -1582,20 +1591,22 @@ export async function BuyNFT(asset, metadata) {
     )
   );
 
+  //console.log(askingPrice);
+
   const sellerOutPut = CustomLoader.Cardano.TransactionOutput.new(
     sellerAddress,
 
     CustomLoader.Cardano.Value.new(
-      CustomLoader.Cardano.BigNum.from_str("10000000")
+      CustomLoader.Cardano.BigNum.from_str(`${askingPrice}`)
     )
   );
 
-  const marketOutPut = CustomLoader.Cardano.TransactionOutput.new(
-    marketAddress,
+  /*   const marketOutPut = CustomLoader.Cardano.TransactionOutput.new( //TODO: for now wer are not paying fees!! check
+    CustomLoader.Cardano.Address.from_bech32(marketAddress),
     CustomLoader.Cardano.Value.new(
       CustomLoader.Cardano.BigNum.from_str("10000000")
     )
-  );
+  ); */
 
   // DATUM
 
@@ -1618,7 +1629,7 @@ export async function BuyNFT(asset, metadata) {
   const outPuts = CustomLoader.Cardano.TransactionOutputs.new();
   outPuts.add(NFToutPut);
   outPuts.add(sellerOutPut);
-  outPuts.add(marketOutPut);
+  //outPuts.add(marketOutPut); TODO: MAKE THIS WORK!
 
   CoinSelection.setProtocolParameters(
     protocolParameters.minUtxo.toString(),
@@ -1644,13 +1655,11 @@ export async function BuyNFT(asset, metadata) {
 
   txBuilder.add_output(NFToutPut);
   txBuilder.add_output(sellerOutPut);
-  txBuilder.add_output(marketOutPut);
+  //txBuilder.add_output(marketOutPut);  TODO: MAKE THIS WORK!
 
   const redeemers = CustomLoader.Cardano.Redeemers.new();
-  // not passing datum because close.json content is {"constructor":2,"fields":[]}
 
   const SimpleRedeemer = async (index) => {
-    //close.json - 0 is de data in the redemer corresponds to Buy ?
     const redeemerData = CustomLoader.Cardano.PlutusData.new_constr_plutus_data(
       CustomLoader.Cardano.ConstrPlutusData.new(
         CustomLoader.Cardano.Int.new_i32(0),
@@ -1684,25 +1693,6 @@ export async function BuyNFT(asset, metadata) {
 
   const transactionWitnessSet =
     CustomLoader.Cardano.TransactionWitnessSet.new();
-
-  /*   if (typeof metadata !== undefined) {
-    aux_data = CustomLoader.Cardano.AuxiliaryData.new();
-    const generalMetadata =
-      CustomLoader.Cardano.GeneralTransactionMetadata.new();
-    Object.keys(metadata).forEach((label) => {
-      Object.keys(metadata[label]).length > 0 &&
-        generalMetadata.insert(
-          CustomLoader.Cardano.BigNum.from_str(label),
-          CustomLoader.Cardano.encode_json_str_to_metadatum(
-            JSON.stringify(metadata[label]),
-            1
-          )
-        );
-    });
-
-    aux_data.set_metadata(generalMetadata);
-    txBuilder.set_auxiliary_data(aux_data);
-  } */
 
   txBuilder.set_plutus_scripts(scripts);
   console.log(scripts);
@@ -1742,13 +1732,13 @@ export async function BuyNFT(asset, metadata) {
   console.log(collateral.input());
   collaterals.add(collateral.input());
 
-  /*  const requiredSigners = CustomLoader.Cardano.Ed25519KeyHashes.new();
+  const requiredSigners = CustomLoader.Cardano.Ed25519KeyHashes.new(); // No required signers needed for buying
   requiredSigners.add(
     CustomLoader.Cardano.BaseAddress.from_address(clientAddress)
       .payment_cred()
       .to_keyhash()
   );
-  txBuilder.set_required_signers(requiredSigners); */
+  txBuilder.set_required_signers(requiredSigners);
   txBuilder.set_collateral(collaterals);
   txBuilder.add_change_if_needed(clientAddress);
 
